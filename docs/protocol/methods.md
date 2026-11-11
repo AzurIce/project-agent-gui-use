@@ -2,6 +2,8 @@
 
 方法只有在 `hello` 的 `capabilities` 中声明后才可调用，未声明的方法返回 `-32601`。
 
+完整的名称、参数与返回类型见[方法索引](generated.md)；本页只写语义、参数约束和示例。
+
 ## 应用
 
 ### apps.list
@@ -14,7 +16,7 @@
 
 ```json
 {"jsonrpc":"2.0","id":1,"result":{"apps":[
-  {"package":"com.tencent.mm","label":"微信","launchable":true}
+  {"package_name":"com.tencent.mm","label":"微信","launchable":true}
 ]}}
 ```
 
@@ -42,14 +44,14 @@
 ```json
 {"jsonrpc":"2.0","id":2,"result":{
   "seq": 42,
-  "package": "com.tencent.mm",
+  "package_name": "com.tencent.mm",
   "activity": ".ui.LauncherUI",
   "truncated": false,
   "nodes": [
-    {"id":"n1","parent":null,"class":"android.widget.FrameLayout",
+    {"id":"n1","parent":null,"class_name":"android.widget.FrameLayout",
      "bounds":[0,0,1080,2400],"flags":{},
      "actions":[]},
-    {"id":"n7","parent":"n1","class":"android.widget.Button",
+    {"id":"n7","parent":"n1","class_name":"android.widget.Button",
      "text":"发送","view_id":"com.tencent.mm:id/send",
      "bounds":[880,2100,1040,2200],
      "flags":{"clickable":true,"enabled":true},
@@ -124,7 +126,7 @@
 ```json
 {"jsonrpc":"2.0","id":8,"result":{"notifications":[
   {"key":"0|com.tencent.mm|1|null|10001",
-   "package":"com.tencent.mm",
+   "package_name":"com.tencent.mm",
    "title":"小明","text":"明天几点出发？",
    "posted_at":1762000000000,
    "ongoing":false,

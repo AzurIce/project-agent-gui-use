@@ -7,7 +7,7 @@
   "seq": 43,
   "ts": 1762000000123,
   "type": "notification.posted",
-  "data": {"key":"...","package":"com.tencent.mm","title":"小明"}
+  "data": {"key":"...","package_name":"com.tencent.mm","title":"小明"}
 }}
 ```
 
@@ -24,8 +24,8 @@
 | --- | --- | --- |
 | `notification.posted` | 通知内容 | 不合并，按 key 更新 |
 | `notification.removed` | `{key}` | 不合并 |
-| `ui.window_changed` | `{package, activity}` | 保留最后一条 |
-| `ui.content_changed` | `{package, activity, kinds}` | 300ms 内合并 |
+| `ui.window_changed` | `{package_name, activity}` | 保留最后一条 |
+| `ui.content_changed` | `{package_name, activity, kinds}` | 300ms 内合并 |
 | `ui.text_changed` | `{node_hint, text}` | 300ms 内合并 |
 | `ui.idle` | `{since_seq}` | 保留最后一条 |
 | `screen.state` | `{on, interactive, locked}` | 保留最后一条 |

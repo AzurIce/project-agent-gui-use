@@ -1,0 +1,8 @@
+[package]
+name = "gui-use-protocol-codegen"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+gui-use-protocol = { path = "../gui-use-protocol" }
+serde_json = "1"

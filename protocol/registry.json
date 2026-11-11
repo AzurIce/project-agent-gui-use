@@ -1,0 +1,23 @@
+{
+  "methods": [
+    {
+      "name": "app.list",
+      "params": "AppListParams",
+      "result": "AppListResult",
+      "summary": "列出可启动的应用"
+    },
+    {
+      "name": "ui.snapshot",
+      "params": "UiSnapshotParams",
+      "result": "UiSnapshotResult",
+      "summary": "读取当前窗口的节点树"
+    },
+    {
+      "name": "notification.list",
+      "params": "NotificationListParams",
+      "result": "NotificationListResult",
+      "summary": "读取当前活跃通知"
+    }
+  ],
+  "protocol": 1
+}

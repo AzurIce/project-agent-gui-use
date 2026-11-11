@@ -64,6 +64,12 @@
           };
 
           notistPkg = notist.packages.${system}.default;
+
+          # nixpkgs 里的 typeshare 1.13.4 有一个 doctest 失败，关掉检查即可使用。
+          typeshare = pkgs.typeshare.overrideAttrs (_: {
+            doCheck = false;
+            doInstallCheck = false;
+          });
         in
         {
           devShells.default = pkgs.mkShell {
@@ -74,6 +80,7 @@
               rust
               pkgs.just
               notistPkg
+              typeshare
             ]
             ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux [
               # 调试用的桌面端镜像/控制工具，手机上不需要。
