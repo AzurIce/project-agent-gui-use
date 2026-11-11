@@ -7,6 +7,10 @@
 .direnv/
 .envrc
 
+# Notist
+/dist/
+/notist-output/
+
 # Gradle / Android
 android/.gradle/
 android/.kotlin/

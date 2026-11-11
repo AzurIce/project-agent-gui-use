@@ -13,6 +13,14 @@ install-android:
 build-host:
     cargo build
 
+# 构建文档站点
+docs:
+    notist build
+
+# 本地预览文档
+serve-docs:
+    notist serve
+
 fmt:
     cargo fmt --all
 

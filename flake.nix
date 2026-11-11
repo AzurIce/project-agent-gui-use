@@ -8,6 +8,16 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    notist = {
+      # 固定到含 crates/notist-observe/src/timings.html 的版本：更新的 rev 里该文件
+      # 不在 git 树中，Nix 构建会因 include_str! 失败。
+      url = "github:AzurIce/notist/3d17013b60a01a7e53e68bd076540494f4c5549a";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-utils.follows = "flake-utils";
+        rust-overlay.follows = "rust-overlay";
+      };
+    };
   };
 
   outputs =
@@ -15,6 +25,7 @@
       nixpkgs,
       flake-utils,
       rust-overlay,
+      notist,
       ...
     }:
     flake-utils.lib.eachSystem
@@ -51,6 +62,8 @@
               "clippy"
             ];
           };
+
+          notistPkg = notist.packages.${system}.default;
         in
         {
           devShells.default = pkgs.mkShell {
@@ -60,6 +73,7 @@
               android.androidsdk
               rust
               pkgs.just
+              notistPkg
             ]
             ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux [
               # 调试用的桌面端镜像/控制工具，手机上不需要。

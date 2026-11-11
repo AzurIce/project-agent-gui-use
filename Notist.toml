@@ -1,0 +1,18 @@
+[package]
+name = "project-agent-gui-use"
+
+[site]
+title = "GUI Use"
+content = "docs"
+theme = "builtins.book"
+directory_urls = true
+copy_content_assets = false
+
+[site.extensions.builtins.book]
+select = true
+
+[[extensions]]
+kind = "replace"
+imports = { typst = "docs/_components/typst/lib.notc" }
+from = "notist.math"
+to = "typst.math"
