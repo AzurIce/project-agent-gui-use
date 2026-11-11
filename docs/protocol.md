@@ -26,7 +26,9 @@ flowchart LR
 - 传输为 `wss://`，手机主动外连，host 是服务端。地址与 token 保存在手机端配置里。
 - 首次连接后发送 `hello`，协商协议版本与能力；`hello` 成功之前不接受其他请求。
 - token 放在 `hello` 的 params 里，不放 URL，避免被代理日志记录。
-- 双向心跳：设备每 15 秒发 `ping`，30 秒没有 `pong` 视为断线并重连。
+- 心跳使用 WebSocket 控制帧（RFC 6455 ping/pong），不占用 JSON-RPC，也不与业务消息抢队列。
+- 设备每 15 秒发 ping，host 立即回 pong；任意一侧 30 秒内既没有 pong 也没有其他帧，就判定连接不可用并重连。host 侧同样按 pong 超时回收会话。
+- 不能只依赖 close 事件：移动网络切换、NAT 静默超时、进程被杀、Doze 挂起都会留下半开连接，TCP 可能长时间保持 ESTABLISHED，只有应用层 ping 才能发现对端已经不可用。TCP keepalive 的默认超时以小时计，不作为检测手段。
 - 重连采用指数退避，上限 30 秒；网络切换、亮屏、充电状态变化时立即重试一次。
 
 ## 消息模型
