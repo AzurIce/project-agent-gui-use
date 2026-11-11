@@ -128,7 +128,7 @@
   {"key":"0|com.tencent.mm|1|null|10001",
    "package_name":"com.tencent.mm",
    "title":"小明","text":"明天几点出发？",
-   "posted_at":1762000000000,
+   "posted_at":"2026-11-12T01:23:45.678Z",
    "ongoing":false,
    "actions":[{"index":0,"title":"回复","remote_input":true}]}
 ]}}

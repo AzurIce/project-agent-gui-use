@@ -5,7 +5,7 @@
 ```json
 {"jsonrpc":"2.0","method":"events","params":{
   "seq": 43,
-  "ts": 1762000000123,
+  "ts": "2026-11-12T01:23:45.678Z",
   "type": "notification.posted",
   "data": {"key":"...","package_name":"com.tencent.mm","title":"小明"}
 }}
@@ -14,7 +14,7 @@
 | 字段 | 说明 |
 | --- | --- |
 | `seq` | 设备端单调递增的会话序号，连接建立时从 1 开始 |
-| `ts` | 设备侧 Unix 毫秒时间戳 |
+| `ts` | RFC 3339 时间戳 |
 | `type` | 事件类型 |
 | `data` | 类型相关载荷 |
 

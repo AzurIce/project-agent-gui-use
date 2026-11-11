@@ -78,7 +78,7 @@ flowchart LR
 ```json
 {"jsonrpc":"2.0","method":"events","params":{
   "seq": 43,
-  "ts": 1762000000123,
+  "ts": "2026-11-12T01:23:45.678Z",
   "type": "notification.posted",
   "data": {"key":"...","package_name":"com.tencent.mm","title":"小明"}
 }}
