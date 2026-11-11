@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GUI Use</string>
+    <string name="accessibility_service_description">读取界面结构与执行操作，供本机 agent 使用。</string>
+</resources>

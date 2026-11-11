@@ -1,0 +1,25 @@
+# Rust
+/target/
+
+# Nix
+/result
+/result-*
+.direnv/
+.envrc
+
+# Gradle / Android
+android/.gradle/
+android/.kotlin/
+android/local.properties
+android/**/build/
+android/captures/
+*.apk
+*.aab
+
+# IDE
+.idea/
+*.iml
+
+# Signing material
+*.jks
+*.keystore
