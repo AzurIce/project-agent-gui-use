@@ -144,5 +144,4 @@ flowchart LR
 ## 页面
 
 - [请求方法](protocol/methods.md)
-- [方法索引（由 Rust 生成）](protocol/generated.md)
 - [事件](protocol/events.md)

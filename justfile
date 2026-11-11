@@ -30,7 +30,7 @@ protocol:
 # 检查生成产物是否与 Rust 定义一致
 protocol-check:
     just protocol
-    test -z "$(git status --porcelain -- android/app/src/main/java/dev/azurice/guiuse/protocol protocol docs/protocol/generated.md)"
+    test -z "$(git status --porcelain -- android/app/src/main/java/dev/azurice/guiuse/protocol protocol docs/_components/protocol)"
 
 fmt:
     cargo fmt --all
