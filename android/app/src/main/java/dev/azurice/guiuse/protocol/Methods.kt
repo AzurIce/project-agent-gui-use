@@ -5,26 +5,62 @@ import kotlinx.serialization.json.Json
 
 object Methods {
     const val APP_LIST = "app.list"
+    const val APP_LAUNCH = "app.launch"
     const val UI_SNAPSHOT = "ui.snapshot"
+    const val UI_ACT = "ui.act"
+    const val UI_GESTURE = "ui.gesture"
+    const val UI_WAIT = "ui.wait"
+    const val UI_SCREENSHOT = "ui.screenshot"
     const val NOTIFICATION_LIST = "notification.list"
+    const val NOTIFICATION_REPLY = "notification.reply"
 }
 
 interface AppListHandler {
     suspend fun handle(params: AppListParams): AppListResult
 }
 
+interface AppLaunchHandler {
+    suspend fun handle(params: AppLaunchParams): AppLaunchResult
+}
+
 interface UiSnapshotHandler {
     suspend fun handle(params: UiSnapshotParams): UiSnapshotResult
+}
+
+interface UiActHandler {
+    suspend fun handle(params: UiActParams): UiActResult
+}
+
+interface UiGestureHandler {
+    suspend fun handle(params: UiGestureParams): UiGestureResult
+}
+
+interface UiWaitHandler {
+    suspend fun handle(params: UiWaitParams): UiWaitResult
+}
+
+interface UiScreenshotHandler {
+    suspend fun handle(params: UiScreenshotParams): UiScreenshotInfo
 }
 
 interface NotificationListHandler {
     suspend fun handle(params: NotificationListParams): NotificationListResult
 }
 
+interface NotificationReplyHandler {
+    suspend fun handle(params: NotificationReplyParams): NotificationReplyResult
+}
+
 interface Handlers {
     val appList: AppListHandler
+    val appLaunch: AppLaunchHandler
     val uiSnapshot: UiSnapshotHandler
+    val uiAct: UiActHandler
+    val uiGesture: UiGestureHandler
+    val uiWait: UiWaitHandler
+    val uiScreenshot: UiScreenshotHandler
     val notificationList: NotificationListHandler
+    val notificationReply: NotificationReplyHandler
 }
 
 object ProtocolDispatch {
@@ -34,13 +70,37 @@ object ProtocolDispatch {
                 AppListResult.serializer(),
                 handlers.appList.handle(json.decodeFromString(AppListParams.serializer(), params)),
             )
+            Methods.APP_LAUNCH -> json.encodeToString(
+                AppLaunchResult.serializer(),
+                handlers.appLaunch.handle(json.decodeFromString(AppLaunchParams.serializer(), params)),
+            )
             Methods.UI_SNAPSHOT -> json.encodeToString(
                 UiSnapshotResult.serializer(),
                 handlers.uiSnapshot.handle(json.decodeFromString(UiSnapshotParams.serializer(), params)),
             )
+            Methods.UI_ACT -> json.encodeToString(
+                UiActResult.serializer(),
+                handlers.uiAct.handle(json.decodeFromString(UiActParams.serializer(), params)),
+            )
+            Methods.UI_GESTURE -> json.encodeToString(
+                UiGestureResult.serializer(),
+                handlers.uiGesture.handle(json.decodeFromString(UiGestureParams.serializer(), params)),
+            )
+            Methods.UI_WAIT -> json.encodeToString(
+                UiWaitResult.serializer(),
+                handlers.uiWait.handle(json.decodeFromString(UiWaitParams.serializer(), params)),
+            )
+            Methods.UI_SCREENSHOT -> json.encodeToString(
+                UiScreenshotInfo.serializer(),
+                handlers.uiScreenshot.handle(json.decodeFromString(UiScreenshotParams.serializer(), params)),
+            )
             Methods.NOTIFICATION_LIST -> json.encodeToString(
                 NotificationListResult.serializer(),
                 handlers.notificationList.handle(json.decodeFromString(NotificationListParams.serializer(), params)),
+            )
+            Methods.NOTIFICATION_REPLY -> json.encodeToString(
+                NotificationReplyResult.serializer(),
+                handlers.notificationReply.handle(json.decodeFromString(NotificationReplyParams.serializer(), params)),
             )
             else -> throw IllegalArgumentException("unknown method: $method")
         }

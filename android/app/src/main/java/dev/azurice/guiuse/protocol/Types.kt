@@ -15,6 +15,18 @@ data class AppInfo (
 )
 
 @Serializable
+data class AppLaunchParams (
+	val package_name: String,
+	val activity: String? = null,
+	val force_stop: Boolean? = null
+)
+
+@Serializable
+data class AppLaunchResult (
+	val accepted: Boolean
+)
+
+@Serializable
 data class AppListParams (
 	val include_system: Boolean? = null
 )
@@ -30,6 +42,19 @@ data class Bounds (
 	val top: Int,
 	val right: Int,
 	val bottom: Int
+)
+
+@Serializable
+data class GesturePoint (
+	val x: Int,
+	val y: Int
+)
+
+@Serializable
+data class GestureStroke (
+	val points: List<GesturePoint>,
+	val start_ms: Int? = null,
+	val duration_ms: Int? = null
 )
 
 @Serializable
@@ -85,6 +110,87 @@ data class NotificationListResult (
 )
 
 @Serializable
+data class NotificationPostedData (
+	val key: String,
+	val package_name: String,
+	val title: String? = null,
+	val text: String? = null,
+	val posted_at: String
+)
+
+@Serializable
+data class NotificationRemovedData (
+	val key: String
+)
+
+@Serializable
+data class NotificationReplyParams (
+	val key: String,
+	val text: String,
+	val action_index: Int? = null
+)
+
+@Serializable
+data class NotificationReplyResult (
+	val sent: Boolean
+)
+
+@Serializable
+data class ScreenStateData (
+	val on: Boolean,
+	val interactive: Boolean,
+	val locked: Boolean
+)
+
+@Serializable
+data class UiActParams (
+	val node: String,
+	val action: String,
+	val text: String? = null
+)
+
+@Serializable
+data class UiActResult (
+	val changed: Boolean
+)
+
+@Serializable
+data class UiContentChangedData (
+	val package_name: String,
+	val activity: String,
+	val kinds: List<String>
+)
+
+@Serializable
+data class UiGestureParams (
+	val strokes: List<GestureStroke>,
+	val timeout_ms: Int? = null
+)
+
+@Serializable
+data class UiGestureResult (
+	val performed: Boolean
+)
+
+@Serializable
+data class UiIdleData (
+	val since_seq: Int
+)
+
+@Serializable
+data class UiScreenshotInfo (
+	val mime: String,
+	val width: Int,
+	val height: Int,
+	val bytes: Int
+)
+
+@Serializable
+data class UiScreenshotParams (
+	val max_width: Int? = null
+)
+
+@Serializable
 data class UiSnapshotParams (
 	val filter: String? = null,
 	val max_nodes: Int? = null
@@ -97,5 +203,29 @@ data class UiSnapshotResult (
 	val activity: String,
 	val truncated: Boolean,
 	val nodes: List<Node>
+)
+
+@Serializable
+data class UiTextChangedData (
+	val node_hint: String,
+	val text: String
+)
+
+@Serializable
+data class UiWaitParams (
+	val until: String,
+	val value: String? = null,
+	val timeout_ms: Int? = null
+)
+
+@Serializable
+data class UiWaitResult (
+	val matched: Boolean
+)
+
+@Serializable
+data class UiWindowChangedData (
+	val package_name: String,
+	val activity: String
 )
 

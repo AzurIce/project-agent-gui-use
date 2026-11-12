@@ -8,6 +8,16 @@ export interface AppInfo {
 	launchable: boolean;
 }
 
+export interface AppLaunchParams {
+	package_name: string;
+	activity?: string;
+	force_stop?: boolean;
+}
+
+export interface AppLaunchResult {
+	accepted: boolean;
+}
+
 export interface AppListParams {
 	include_system?: boolean;
 }
@@ -21,6 +31,17 @@ export interface Bounds {
 	top: number;
 	right: number;
 	bottom: number;
+}
+
+export interface GesturePoint {
+	x: number;
+	y: number;
+}
+
+export interface GestureStroke {
+	points: GesturePoint[];
+	start_ms?: number;
+	duration_ms?: number;
 }
 
 export interface NodeFlags {
@@ -69,6 +90,74 @@ export interface NotificationListResult {
 	notifications: NotificationInfo[];
 }
 
+export interface NotificationPostedData {
+	key: string;
+	package_name: string;
+	title?: string;
+	text?: string;
+	posted_at: string;
+}
+
+export interface NotificationRemovedData {
+	key: string;
+}
+
+export interface NotificationReplyParams {
+	key: string;
+	text: string;
+	action_index?: number;
+}
+
+export interface NotificationReplyResult {
+	sent: boolean;
+}
+
+export interface ScreenStateData {
+	on: boolean;
+	interactive: boolean;
+	locked: boolean;
+}
+
+export interface UiActParams {
+	node: string;
+	action: string;
+	text?: string;
+}
+
+export interface UiActResult {
+	changed: boolean;
+}
+
+export interface UiContentChangedData {
+	package_name: string;
+	activity: string;
+	kinds: string[];
+}
+
+export interface UiGestureParams {
+	strokes: GestureStroke[];
+	timeout_ms?: number;
+}
+
+export interface UiGestureResult {
+	performed: boolean;
+}
+
+export interface UiIdleData {
+	since_seq: number;
+}
+
+export interface UiScreenshotInfo {
+	mime: string;
+	width: number;
+	height: number;
+	bytes: number;
+}
+
+export interface UiScreenshotParams {
+	max_width?: number;
+}
+
 export interface UiSnapshotParams {
 	filter?: string;
 	max_nodes?: number;
@@ -80,5 +169,25 @@ export interface UiSnapshotResult {
 	activity: string;
 	truncated: boolean;
 	nodes: Node[];
+}
+
+export interface UiTextChangedData {
+	node_hint: string;
+	text: string;
+}
+
+export interface UiWaitParams {
+	until: string;
+	value?: string;
+	timeout_ms?: number;
+}
+
+export interface UiWaitResult {
+	matched: boolean;
+}
+
+export interface UiWindowChangedData {
+	package_name: string;
+	activity: string;
 }
 

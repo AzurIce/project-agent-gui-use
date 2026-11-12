@@ -1,13 +1,18 @@
-//! 从 `gui-use-protocol` 的方法注册表生成 Kotlin 接口、文档表格和机器可读清单。
+//! 从 `gui-use-protocol` 的方法注册表生成 Kotlin 接口与机器可读文档数据。
+//!
+//! 文档正文由 `docs/_components/protocol/lib.notc` 读取 `protocol/registry.json`
+//! 后构造，这里只负责把 Rust 类型编译成数据。
 //!
 //! 用法：
 //!   cargo run -p gui-use-protocol-codegen
 //!   cargo run -p gui-use-protocol-codegen -- --check
 
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use gui_use_protocol::{METHODS, MethodSpec};
+use gui_use_protocol::{EVENTS, METHODS};
+use serde_json::{Value, json};
 
 const KOTLIN_PATH: &str = "android/app/src/main/java/dev/azurice/guiuse/protocol/Methods.kt";
 const REGISTRY_PATH: &str = "protocol/registry.json";
@@ -116,7 +121,9 @@ fn kotlin() -> String {
     out.push_str("}\n\n");
 
     out.push_str("object ProtocolDispatch {\n");
-    out.push_str("    suspend fun dispatch(method: String, params: String, json: Json, handlers: Handlers): String =\n");
+    out.push_str(
+        "    suspend fun dispatch(method: String, params: String, json: Json, handlers: Handlers): String =\n",
+    );
     out.push_str("        when (method) {\n");
     for spec in METHODS {
         out.push_str(&format!(
@@ -140,22 +147,175 @@ fn kotlin() -> String {
 }
 
 fn registry() -> String {
-    let methods: Vec<serde_json::Value> = METHODS
+    let schemas = gui_use_protocol::schemas();
+    let mut defs: BTreeMap<String, Value> = BTreeMap::new();
+    let mut methods = Vec::new();
+
+    for (spec, (params, result)) in METHODS.iter().zip(schemas) {
+        let params = serde_json::to_value(&params).expect("serialize params schema");
+        let result = serde_json::to_value(&result).expect("serialize result schema");
+        collect_defs(&params, &mut defs);
+        collect_defs(&result, &mut defs);
+
+        methods.push(json!({
+            "name": spec.name,
+            "summary": spec.summary,
+            "notes": spec.notes,
+            "request": spec.request,
+            "response": spec.response,
+            "params_type": spec.params,
+            "result_type": spec.result,
+            "params": fields_of(&params),
+            "result": fields_of(&result),
+        }));
+    }
+
+    let mut events = Vec::new();
+    for (spec, schema) in EVENTS.iter().zip(gui_use_protocol::event_schemas()) {
+        let schema = serde_json::to_value(&schema).expect("serialize event schema");
+        collect_defs(&schema, &mut defs);
+        events.push(json!({
+            "name": spec.name,
+            "data_type": spec.data,
+            "merge": spec.merge,
+            "notes": spec.notes,
+            "fields": fields_of(&schema),
+        }));
+    }
+
+    let types: Vec<Value> = defs
         .iter()
-        .map(|spec: &MethodSpec| {
-            serde_json::json!({
-                "name": spec.name,
-                "params": spec.params,
-                "result": spec.result,
-                "summary": spec.summary,
+        .map(|(name, schema)| {
+            json!({
+                "name": name,
+                "fields": fields_of(schema),
             })
         })
         .collect();
-    let doc = serde_json::json!({
+
+    let doc = json!({
         "protocol": 1,
         "methods": methods,
+        "events": events,
+        "types": types,
     });
     let mut text = serde_json::to_string_pretty(&doc).expect("serialize registry");
     text.push('\n');
     text
+}
+
+fn collect_defs(schema: &Value, defs: &mut BTreeMap<String, Value>) {
+    if let Some(map) = schema.get("$defs").and_then(Value::as_object) {
+        for (name, value) in map {
+            defs.insert(name.clone(), value.clone());
+        }
+    }
+}
+
+fn fields_of(schema: &Value) -> Vec<Value> {
+    let required: BTreeSet<&str> = schema
+        .get("required")
+        .and_then(Value::as_array)
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(Value::as_str)
+                .collect::<BTreeSet<_>>()
+        })
+        .unwrap_or_default();
+
+    let Some(properties) = schema.get("properties").and_then(Value::as_object) else {
+        return Vec::new();
+    };
+
+    properties
+        .iter()
+        .map(|(name, value)| {
+            json!({
+                "name": name,
+                "type": render_type(value),
+                "required": required.contains(name.as_str()),
+                "description": value.get("description").and_then(Value::as_str).unwrap_or(""),
+            })
+        })
+        .collect()
+}
+
+fn render_type(schema: &Value) -> String {
+    if let Some(reference) = schema.get("$ref").and_then(Value::as_str) {
+        return reference
+            .rsplit('/')
+            .next()
+            .unwrap_or(reference)
+            .to_string();
+    }
+
+    if let Some(any) = schema.get("anyOf").and_then(Value::as_array) {
+        let non_null: Vec<&Value> = any
+            .iter()
+            .filter(|value| value.get("type").and_then(Value::as_str) != Some("null"))
+            .collect();
+        let nullable = non_null.len() != any.len();
+        let rendered = if non_null.is_empty() {
+            "null".to_string()
+        } else if non_null.len() == 1 {
+            render_type(non_null[0])
+        } else {
+            non_null
+                .iter()
+                .map(|value| render_type(value))
+                .collect::<Vec<_>>()
+                .join(" | ")
+        };
+        return if nullable {
+            format!("{rendered}?")
+        } else {
+            rendered
+        };
+    }
+
+    if let Some(types) = schema.get("type") {
+        if let Some(list) = types.as_array() {
+            let non_null: Vec<&str> = list
+                .iter()
+                .filter_map(Value::as_str)
+                .filter(|value| *value != "null")
+                .collect();
+            let nullable = non_null.len() != list.len();
+            let rendered = non_null
+                .iter()
+                .map(|value| render_scalar_type(value))
+                .collect::<Vec<_>>()
+                .join(" | ");
+            return if nullable {
+                format!("{rendered}?")
+            } else {
+                rendered
+            };
+        }
+        if let Some(value) = types.as_str() {
+            if value == "array" {
+                let item = schema
+                    .get("items")
+                    .map(render_type)
+                    .unwrap_or_else(|| "any".to_string());
+                return format!("{item}[]");
+            }
+            return render_scalar_type(value);
+        }
+    }
+
+    "any".to_string()
+}
+
+fn render_scalar_type(name: &str) -> String {
+    match name {
+        "string" => "string".to_string(),
+        "integer" | "number" => "int".to_string(),
+        "boolean" => "bool".to_string(),
+        "array" => "array".to_string(),
+        "object" => "object".to_string(),
+        "null" => "null".to_string(),
+        other => other.to_string(),
+    }
 }
