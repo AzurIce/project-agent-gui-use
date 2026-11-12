@@ -50,7 +50,7 @@ class AndroidDevice(private val context: Context) : Device {
         ?: throw DeviceRpcException(2005, "Accessibility permission is not enabled")
 
     private fun root(): AccessibilityNodeInfo {
-        val root = service().rootInActiveWindow ?: throw DeviceRpcException(2005, "No accessible active window")
+        val root = service().applicationRoot() ?: throw DeviceRpcException(2005, "No accessible active window")
         try { policy.requireSafeRoot(root) }
         catch (error: Exception) { root.recycle(); throw error }
         return root

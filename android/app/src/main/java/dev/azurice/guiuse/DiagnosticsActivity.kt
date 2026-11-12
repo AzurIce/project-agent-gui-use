@@ -27,6 +27,8 @@ class DiagnosticsActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(32, 48, 32, 32) }
+        content.isFocusableInTouchMode = true
+        content.requestFocus()
         content.addView(TextView(this).apply { text = "GUI Use local test surface"; textSize = 22f })
         content.addView(EditText(this).apply { id = R.id.test_input; setText("Initial text"); hint = "Test input"; setSingleLine(true) })
         val counter = TextView(this).apply { id = R.id.test_counter; text = "Count: 0" }

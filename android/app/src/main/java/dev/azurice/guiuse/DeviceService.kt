@@ -7,6 +7,8 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityWindowInfo
 import dev.azurice.guiuse.protocol.ProtocolEvents
 import dev.azurice.guiuse.protocol.UiContentChangedData
 import dev.azurice.guiuse.protocol.UiIdleData
@@ -20,6 +22,17 @@ class DeviceService : AccessibilityService() {
     var invalidateSnapshot: (() -> Unit)? = null
 
     override fun onServiceConnected() { AgentRuntime.accessibility = this }
+
+    fun applicationRoot(): AccessibilityNodeInfo? {
+        val current = windows
+        return try {
+            // The IME may become the accessibility-active window while the input
+            // focus still belongs to the application. Never pick a background app
+            // merely because its package happens to be allowlisted.
+            current.firstOrNull { it.type == AccessibilityWindowInfo.TYPE_APPLICATION && it.isFocused }?.root
+                ?: rootInActiveWindow
+        } finally { current.forEach { it.recycle() } }
+    }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         event ?: return
@@ -37,12 +50,15 @@ class DeviceService : AccessibilityService() {
         }
         if (event.eventType == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED && !event.isPassword) {
             // Inspect before forwarding text, not just before performing actions.
-            val root = rootInActiveWindow
+            val root = applicationRoot()
             if (root != null) {
                 val safe = runCatching { SafetyPolicy(this).requireSafeRoot(root) }.isSuccess
                 root.recycle()
+                val source = event.source
+                val hint = try { source?.viewIdResourceName ?: source?.className?.toString() ?: event.className?.toString() ?: "" }
+                    finally { source?.recycle() }
                 if (safe) AgentRuntime.emit("ui.text_changed") { seq, ts ->
-                    ProtocolEvents.uiTextChanged(seq, ts, UiTextChangedData("", event.text.joinToString("").take(16384)), AgentRuntime.json)
+                    ProtocolEvents.uiTextChanged(seq, ts, UiTextChangedData(hint, event.text.joinToString("").take(16384)), AgentRuntime.json)
                 }
             }
         }

@@ -56,7 +56,8 @@ object AgentRuntime {
 class SafetyPolicy(private val context: Context) {
     fun requirePackage(packageName: String) {
         if (packageName !in AgentSettings(context).allowedPackages) {
-            throw DeviceRpcException(2005, "Application is not allowlisted")
+            val detail = if (BuildConfig.DEBUG) " ($packageName)" else ""
+            throw DeviceRpcException(2005, "Application is not allowlisted$detail")
         }
         val lowered = packageName.lowercase()
         if (listOf("bank", "wallet", "alipay", "gpay", "payment").any { lowered.contains(it) }) {

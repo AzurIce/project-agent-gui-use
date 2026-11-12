@@ -17,8 +17,8 @@ pub type RpcResult<T> = Result<T, RpcError>;
 /// ```
 pub trait RpcMethod {
     const METHOD: &'static str;
-    type Params: Serialize + DeserializeOwned;
-    type Result: Serialize + DeserializeOwned;
+    type Params: Serialize + DeserializeOwned + Send;
+    type Result: Serialize + DeserializeOwned + Send;
 }
 
 /// Events have a payload, but no request ID or result type.
@@ -160,9 +160,11 @@ impl From<serde_json::Error> for RpcError {
 
 /// Routes an envelope to its peer and correlates its response over the connection.
 /// WebSocket connection management remains the host's responsibility.
-#[allow(async_fn_in_trait)]
-pub trait RpcTransport {
-    async fn request(&self, request: RpcRequest) -> RpcResult<RpcResponse>;
+pub trait RpcTransport: Send + Sync {
+    fn request(
+        &self,
+        request: RpcRequest,
+    ) -> impl std::future::Future<Output = RpcResult<RpcResponse>> + Send;
 }
 
 pub struct RpcClient<T> {

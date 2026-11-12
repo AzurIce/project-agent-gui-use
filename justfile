@@ -9,9 +9,13 @@ build-android:
 install-android:
     cd android && ./gradlew :app:installDebug
 
+# 仅操作明确选择的 OPPO 和本地测试界面；退出时恢复测试配置
+test-device serial:
+    python3 scripts/device_smoke.py --serial {{quote(serial)}}
+
 # 编译 host 端
 build-host:
-    cargo build
+    cargo build --locked -p gui-use-host -j8
 
 # 构建文档站点
 docs: protocol

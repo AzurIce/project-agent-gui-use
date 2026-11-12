@@ -37,11 +37,11 @@ flowchart LR
   "protocol": 1,
   "token": "...",
   "device": {"id":"...","model":"...","sdk":36},
-  "capabilities": ["apps.list","app.launch","ui.snapshot"]
+  "capabilities": ["app.list","app.launch","ui.snapshot"]
 }}
 ```
 
-成功返回 host 的协议版本和它接受的事件类型；版本不一致时直接返回错误，不做降级猜测。
+成功返回 host 的协议版本和它接受的事件类型；版本不一致时拒绝连接，不做降级猜测。
 
 ```json
 {"jsonrpc":"2.0","id":0,"result":{
@@ -69,7 +69,7 @@ flowchart LR
 {"jsonrpc":"2.0","id":7,"result":{"seq":12,"nodes":[]}}
 ```
 
-请求超时默认 10 秒，`ui.wait`、`app.launch` 这类可以显式传 `timeout_ms`。超时后 host 可以发 `$/cancel` 放弃等待，设备端不必回滚已经发生的副作用。
+host CLI 请求超时默认 10 秒，可通过 `--timeout-ms` 调整；`ui.wait` 和 `ui.gesture` 的 `timeout_ms` 控制设备操作自身的等待。超时后 host 发 `$/cancel` 放弃等待，设备端不回滚已经发生的副作用。
 
 ## 事件
 
@@ -105,9 +105,9 @@ flowchart LR
 ## 重连与对账
 
 1. 连接断开后按退避重连，重新走 `hello`。
-2. 新会话的 `seq` 从 1 开始，host 丢弃上一会话的增量缓存。
-3. 对账顺序固定：`ui.snapshot` → `notifications.list` → 继续消费事件。
-4. 对账期间收到的事件先入队，不丢弃；对账完成后按 `seq` 与快照的 `seq` 去重。
+2. 新会话的 `seq` 从 1 开始，host 为设备分配新的 `session` 标识，事件记录保留该标识。
+3. host 只维护最近 512 条事件；检测到序号缺口时设置 `reconcile_required`。调用方应丢弃该会话的增量推断。
+4. 调用方按 `ui.snapshot` → `notification.list` 对账，再继续消费事件；对账时按 `session` 和快照的 `seq` 去重。host 不自动操作手机或读取其他应用来重建状态。
 
 ## 错误
 
@@ -133,9 +133,9 @@ flowchart LR
 
 - 只接受 `wss://`，token 错误直接关闭连接，不返回方法级错误。
 - 手机端维护应用白名单；不在白名单内的包名，`app.launch` 与 `ui.*` 都返回 `2005`。
-- 支付、密码、验证码类界面由设备端硬阻断，不依赖模型判断。
+- 默认白名单仅含本应用。设备锁定、密码节点、已知银行/钱包包名及支付/验证码提示由设备端阻断；关键词检查是保守启发式，并不能识别所有敏感页面。不要把敏感应用加入白名单。
 - 通知与界面文本一律标记为不可信输入，host 不得把其中的内容当作指令执行。
-- 所有动作写审计日志：时间、方法、节点指纹、应用包名、结果。日志留在手机端环形缓冲，host 可以拉取。
+- 请求执行结果写入手机私有的 `audit.jsonl`：只记录时间、方法与结果码，不记录 token、通知正文、输入文本或截图。单文件超过 256 KiB 时轮换，仅保留一份前文件。
 
 ## 版本
 
@@ -145,3 +145,4 @@ flowchart LR
 
 - [请求方法](protocol/methods.md)
 - [事件](protocol/events.md)
+- [运行与真机测试](running.md)
