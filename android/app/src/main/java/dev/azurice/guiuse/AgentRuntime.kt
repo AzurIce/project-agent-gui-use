@@ -19,6 +19,7 @@ object AgentRuntime {
     @Volatile var accessibility: DeviceService? = null
     @Volatile var notifications: NotificationService? = null
     @Volatile var connectionStatus: String = "Disconnected"
+    @Volatile var serviceRunning: Boolean = false
     @Volatile var activityName: String = ""
     @Volatile var lastUiEvent: Long = SystemClock.uptimeMillis()
     private val lock = Any()

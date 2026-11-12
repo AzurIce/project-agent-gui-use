@@ -52,45 +52,86 @@ class ConnectionService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        AgentRuntime.serviceRunning = true
         getSystemService(NotificationManager::class.java).createNotificationChannel(NotificationChannel(CHANNEL, "Automation connection", NotificationManager.IMPORTANCE_LOW))
-        val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
-        startForeground(1, Notification.Builder(this, CHANNEL).setSmallIcon(android.R.drawable.stat_notify_sync)
-            .setContentTitle("GUI Use session").setContentText("Remote automation is enabled").setContentIntent(open).setOngoing(true).build())
+        startForeground(1, notification("服务运行中，等待电脑"))
         val filter = IntentFilter().apply { addAction(Intent.ACTION_SCREEN_ON); addAction(Intent.ACTION_SCREEN_OFF); addAction(Intent.ACTION_USER_PRESENT); addAction(Intent.ACTION_POWER_CONNECTED); addAction(Intent.ACTION_POWER_DISCONNECTED) }
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(screen, filter, RECEIVER_NOT_EXPORTED) else registerReceiver(screen, filter)
         getSystemService(ConnectivityManager::class.java).registerDefaultNetworkCallback(network)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (connection?.isActive == true) return START_NOT_STICKY
+        val settings = AgentSettings(this)
+        if (intent?.action == ACTION_STOP) {
+            settings.serviceEnabled = false
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        // Sticky recreation must respect an explicit stop, including process races.
+        if (intent == null && !settings.serviceEnabled) { stopSelf(); return START_NOT_STICKY }
+        settings.serviceEnabled = true
+        if (connection?.isActive == true) {
+            if (intent?.action == ACTION_START) { activeSession?.cancel(); retry.trySend(Unit) }
+            return START_STICKY
+        }
         connection = scope.launch {
-            val settings = AgentSettings(this@ConnectionService)
-            try { settings.validate() } catch (_: IllegalArgumentException) { AgentRuntime.connectionStatus = "Invalid pairing configuration"; stopSelf(); return@launch }
             var backoff = 1000L
             while (isActive) {
-                AgentRuntime.connectionStatus = "Connecting"
+                if (!settings.configured) {
+                    status("Waiting for computer", "服务运行中，等待电脑配置")
+                    withTimeoutOrNull(5000) { retry.receive() }
+                    continue
+                }
+                status("Connecting", "服务运行中，正在连接电脑")
                 val started = android.os.SystemClock.uptimeMillis()
                 try { Session(this@ConnectionService, settings).also { activeSession = it }.run() }
                 catch (error: CancellationException) { throw error }
                 catch (_: Exception) { /* No token, notification text or TLS material in logs. */ }
                 finally { activeSession = null }
-                AgentRuntime.connectionStatus = "Disconnected; reconnecting"
+                status("Disconnected; reconnecting", "服务运行中，等待电脑上线")
                 if (android.os.SystemClock.uptimeMillis() - started > 30000) backoff = 1000
                 withTimeoutOrNull(backoff) { retry.receive() }
                 backoff = (backoff * 2).coerceAtMost(30000)
             }
         }
-        return START_NOT_STICKY
+        return START_STICKY
+    }
+
+    private fun notification(text: String): Notification {
+        val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+        val stop = PendingIntent.getService(this, 1, Intent(this, ConnectionService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE)
+        return Notification.Builder(this, CHANNEL).setSmallIcon(android.R.drawable.stat_notify_sync)
+            .setContentTitle("GUI Use 服务").setContentText(text).setContentIntent(open).setOngoing(true)
+            .addAction(Notification.Action.Builder(null, "停止服务", stop).build()).build()
+    }
+
+    private fun status(value: String, text: String) {
+        AgentRuntime.connectionStatus = value
+        getSystemService(NotificationManager::class.java).notify(1, notification(text))
     }
 
     override fun onDestroy() {
         scope.cancel(); AgentRuntime.disconnected(); AgentRuntime.connectionStatus = "Disconnected"
+        AgentRuntime.serviceRunning = false
         unregisterReceiver(screen)
         getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(network)
         super.onDestroy()
     }
     override fun onBind(intent: Intent?): IBinder? = null
-    companion object { const val CHANNEL = "gui-use-connection" }
+    companion object {
+        const val CHANNEL = "gui-use-connection"
+        const val ACTION_START = "dev.azurice.guiuse.START"
+        const val ACTION_STOP = "dev.azurice.guiuse.STOP"
+        fun start(context: Context) {
+            AgentSettings(context).serviceEnabled = true
+            context.startForegroundService(Intent(context, ConnectionService::class.java).setAction(ACTION_START))
+        }
+        fun stop(context: Context) {
+            AgentSettings(context).serviceEnabled = false
+            context.stopService(Intent(context, ConnectionService::class.java))
+        }
+    }
 }
 
 private class Session(private val context: Context, private val settings: AgentSettings) {
@@ -138,6 +179,7 @@ private class Session(private val context: Context, private val settings: AgentS
                     webSocket.send(buildJsonObject { put("jsonrpc", "2.0"); put("id", 0); put("method", "hello"); put("params", json.encodeToJsonElement(hello)) }.toString())
                 }
                 override fun onMessage(webSocket: WebSocket, text: String) {
+                    if (!settings.serviceEnabled || !AgentRuntime.serviceRunning) return
                     if (text.length > 1024 * 1024) { webSocket.close(1009, "Message too large"); return }
                     val message = try { json.parseToJsonElement(text).jsonObject } catch (_: Exception) { error(JsonNull, -32700, "Invalid JSON"); return }
                     if (!authenticated) {
@@ -149,6 +191,12 @@ private class Session(private val context: Context, private val settings: AgentS
                                 if (webSocket.queueSize() > 1024 * 1024) { webSocket.close(1011, "Event queue overflow"); false } else webSocket.send(event.toString())
                             }
                             AgentRuntime.connectionStatus = "Connected"
+                            context.getSystemService(NotificationManager::class.java).notify(1,
+                                Notification.Builder(context, ConnectionService.CHANNEL).setSmallIcon(android.R.drawable.stat_notify_sync)
+                                    .setContentTitle("GUI Use 服务").setContentText("已连接电脑，服务运行中")
+                                    .setContentIntent(PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE))
+                                    .setOngoing(true).addAction(Notification.Action.Builder(null, "停止服务",
+                                        PendingIntent.getService(context, 1, Intent(context, ConnectionService::class.java).setAction(ConnectionService.ACTION_STOP), PendingIntent.FLAG_IMMUTABLE)).build()).build())
                             authenticated = true
                             ready.complete(Unit)
                             AgentRuntime.screenState(context)

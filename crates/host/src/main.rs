@@ -1,3 +1,4 @@
+use std::io::IsTerminal;
 use std::io::Write;
 use std::net::SocketAddr;
 use std::os::unix::fs::OpenOptionsExt;
@@ -69,6 +70,15 @@ enum Command {
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("warn,gui_use_host=info")),
+        )
+        .with_writer(std::io::stderr)
+        .with_ansi(std::io::stderr().is_terminal())
+        .with_target(false)
+        .init();
     let directory = args.state_dir.unwrap_or_else(|| {
         PathBuf::from(std::env::var_os("XDG_STATE_HOME").unwrap_or_else(|| {
             let mut home = PathBuf::from(std::env::var_os("HOME").unwrap_or_else(|| ".".into()));

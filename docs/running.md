@@ -1,5 +1,13 @@
 # 运行与真机测试
 
+## USB 原型快捷入口
+
+手机安装最新 debug APK 并允许 USB 调试后，可直接运行 `gui-use-agent run '任务'`，自动初始化/启动 host、配置 USB 并连接手机，不需要下面的手动配对流程。已有 `DEEPSEEK_API_KEY` 时默认使用 DeepSeek Flash。详见 [PTC agent](agent.md)。多台已安装本应用的手机用 `--serial` 选择。
+
+手机首页提供“启动服务 / 停止服务”。启动后以常驻通知运行，关闭页面或按 Home 不影响连接；电脑不在线或未配置时显示等待。通知中也可停止服务。启用状态持久化，进程被系统回收时请求通过 `START_STICKY` 恢复；主动停止会清除启用状态，不自动重启。不注册开机自启，不承诺绕过厂商强制停止/后台限制，OPPO 可在“后台与电池设置”允许后台运行。
+
+以下命令供手动网络连接和底层调试使用。
+
 ## 构建
 
 进入 `nix develop`，在仓库根目录运行：
@@ -24,9 +32,9 @@ cargo run --locked -p gui-use-host -- init
 在手机上安装 APK，打开 GUI Use：
 
 1. 启用本应用的无障碍与通知访问权限。
-2. 从私有 `pairing.json` 填入 endpoint、token、certificate_sha256。
+2. 展开“高级连接设置”，从私有 `pairing.json` 填入 endpoint、token、certificate_sha256。
 3. 配置允许操作的包名，默认仅有 `dev.azurice.guiuse`。不要加入银行、钱包或其他敏感应用。
-4. 点击 Save and connect，保持前台服务通知开启。
+4. 保存高级设置，点击“启动服务”，保持前台服务通知开启。
 
 客户端仅接受 `wss://`，使用明确配对的证书 SHA-256 指纹验证 TLS；token 在加密后的 `hello` 中发送，不放 URL。错误 token 或证书会被拒绝。更换 host 身份需要重新配对。
 
@@ -54,6 +62,8 @@ target/debug/gui-use-host call ui.screenshot --params '{"max_width":720}' --outp
 
 Rust 调用方可以用 `DeviceClient::new(gui_use_host::client::LocalTransport::new(directory, device_id))` 连接运行中的本地 host，再调用 `client.app_list(Some(false)).await?` 等生成方法。host 内部使用 `WsTransport`，同一连接上统一分配线缆请求 ID。
 
+需要模型在执行端筛选 UI 树、批量编排调用时，使用独立的 [PTC agent](agent.md)。
+
 ## 支持范围与限制
 
 - `app.list`：枚举可启动应用，可选择是否包含系统应用。
@@ -66,7 +76,7 @@ Rust 调用方可以用 `DeviceClient::new(gui_use_host::client::LocalTransport:
 - `notification.list`、`notification.reply`：只处理白名单中非敏感应用的活动通知；回复使用通知自身的 free-form RemoteInput。多个输入字段无法由单个 text 明确区分时返回 2002，不猜测目标。
 - 事件包含 UI 窗口、内容、文本、空闲、屏幕状态以及通知出现/撤下。UI 内容按 300 毫秒去抖。
 
-设备只在用户开启会话后连接，不注册开机自启；断线指数退避重连，上限 30 秒。网络变化、亮屏和充电状态变化会唤醒重试。双方使用 WebSocket ping/pong，不把心跳混入业务事件。
+设备在手机开启服务或 USB agent 自动接入后连接，不注册开机自启；断线指数退避重连，上限 30 秒。网络变化、亮屏和充电状态变化会唤醒重试。双方使用 WebSocket ping/pong，不把心跳混入业务事件。
 
 默认白名单、设备锁定与密码字段检查是主要保护。敏感包名/页面关键词检查是保守启发式，不是对所有敏感界面的完整检测。界面和通知内容都是不可信数据，不能把其中的文本自动当成 host 指令。
 

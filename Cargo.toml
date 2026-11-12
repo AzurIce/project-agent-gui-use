@@ -5,4 +5,5 @@ members = [
   "crates/gui-use-protocol-macros",
   "crates/gui-use-protocol-codegen",
   "crates/host",
+  "crates/agent",
 ]

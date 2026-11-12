@@ -17,6 +17,14 @@ test-device serial:
 build-host:
     cargo build --locked -p gui-use-host -j8
 
+# 独立 PTC agent（普通 Android 构建不依赖此执行器）
+build-agent:
+    cargo build --locked -p gui-use-agent -j8
+
+# 在明确选择的 OPPO 自有测试界面上验证 PTC 编排
+test-ptc-device serial:
+    python3 scripts/device_smoke.py --serial {{quote(serial)}} --ptc-agent
+
 # 构建文档站点
 docs: protocol
     notist build

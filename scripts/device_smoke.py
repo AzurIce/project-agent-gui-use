@@ -27,7 +27,7 @@ NOTIFICATIONS = f"{PACKAGE}/{PACKAGE}.NotificationService"
 
 
 class Smoke:
-    def __init__(self, serial, directory, skip_install=False):
+    def __init__(self, serial, directory, skip_install=False, ptc_agent=False):
         self.serial = serial
         self.directory = Path(directory)
         self.host = ROOT / "target/debug/gui-use-host"
@@ -35,6 +35,7 @@ class Smoke:
         self.log = None
         self.results = []
         self.skip_install = skip_install
+        self.ptc_agent = ptc_agent
 
     def adb(self, *arguments, check=True, data=None, status_only=False):
         try:
@@ -142,6 +143,95 @@ class Smoke:
     def record(self, name):
         self.results.append(name)
         print(f"PASS {name}", flush=True)
+
+    def check_ptc_agent(self, device_id):
+        agent = ROOT / "target/debug/gui-use-agent"
+        command = [str(agent), "--state-dir", str(self.directory), "--device", device_id]
+        # The reference program operates ONLY the already-owned fixture. A single
+        # execution batches launch, observation, three clicks, waits and verification.
+        def execute():
+            process = subprocess.run(command + ["--allow-actions", "exec", "--file", str(ROOT / "examples/ptc/diagnostics.js")],
+                capture_output=True, text=True, timeout=45)
+            result = json.loads(process.stdout)
+            assert process.returncode == 0 and result["ok"], result.get("error")
+            return result
+        result = self.wait(execute)
+        assert result["result"]["verified"] and result["result"]["clicks"] == 3
+        assert result["result"]["after"] == f'Count: {result["result"]["before"] + 3}'
+        assert result["stats"]["rpc_calls"] == 13
+        assert result["stats"]["rpc_response_bytes"] > 5 * result["stats"]["model_visible_bytes"]
+        readonly = subprocess.run(command + ["exec", "--file", str(ROOT / "examples/ptc/diagnostics.js")],
+            capture_output=True, text=True, timeout=10)
+        denied = json.loads(readonly.stdout)
+        assert readonly.returncode != 0 and not denied["ok"] and "Actions are disabled" in denied["error"]
+        print("PTC byte counts:", json.dumps(result["stats"]), flush=True)
+        self.record("isolated PTC runtime, batched real-device actions, compact evidence and read-only enforcement")
+
+    def check_service_lifecycle(self):
+        self.shell("input", "keyevent", "KEYCODE_HOME")
+        assert "apps" in self.call("app.list")
+        services = self.shell("dumpsys", "activity", "services", PACKAGE)
+        assert "ConnectionService" in services and "isForeground=true" in services
+        self.record("foreground service remains connected with the control activity closed")
+        old_pid = self.shell("pidof", PACKAGE)
+        assert old_pid.isdigit(), "Only the owned application process may be killed"
+        self.shell("run-as", PACKAGE, "kill", "-9", old_pid)
+        self.wait(lambda: self.shell("pidof", PACKAGE, check=False) not in ("", old_pid), timeout=60)
+        self.wait(lambda: self.control("host.devices").get("result"), timeout=60)
+        assert "apps" in self.call("app.list")
+        self.record("sticky foreground service and connection recover after owned process death")
+        self.debug("stop-action")
+        self.wait(lambda: not self.control("host.devices")["result"])
+        prefs = self.adb("exec-out", "run-as", PACKAGE, "cat", "shared_prefs/connection.xml")
+        assert b'name="service_enabled" value="false"' in prefs
+        time.sleep(1)
+        assert not self.control("host.devices")["result"]
+        self.debug("start")
+        self.wait(lambda: self.control("host.devices").get("result"))
+        self.record("explicit service stop persists and explicit start reconnects")
+
+    def check_usb_bootstrap(self):
+        self.debug("disconnect")
+        self.stop_host()
+        directory = self.directory / "automatic-host"
+        command = [str(ROOT / "target/debug/gui-use-agent"), "--state-dir", str(directory),
+            "--serial", self.serial, "--allow-actions", "exec", "--file", str(ROOT / "examples/ptc/diagnostics.js")]
+        try:
+            def execute():
+                process = subprocess.run(command, capture_output=True, text=True, timeout=50)
+                assert process.returncode == 0, process.stderr
+                value = json.loads(process.stdout)
+                assert value["ok"], value.get("error")
+                return value
+            result = self.wait(execute, timeout=75)
+            assert result["result"]["verified"] and result["result"]["clicks"] == 3
+            assert (directory / "pairing.json").is_file()
+            self.wait(lambda: not (directory / "control.sock").exists())
+            services = self.shell("dumpsys", "activity", "services", PACKAGE)
+            assert "ConnectionService" in services and "isForeground=true" in services
+            self.record("single-command USB identity, embedded host, pairing import, device selection and PTC")
+            def inspect_foreground():
+                inspect = subprocess.run(command[:-1] + [str(ROOT / "examples/ptc/inspect.js")],
+                    capture_output=True, text=True, timeout=50)
+                assert inspect.returncode == 0, inspect.stderr
+                observed = json.loads(inspect.stdout)
+                assert observed["ok"] and any((node.get("view_id") or "").endswith("/test_increment") for node in observed["result"]["controls"])
+                return observed
+            # The deliberate process-death test may produce a delayed, GUI Use-only
+            # OEM accessibility guide. Dismiss it using the existing scoped helper
+            # and restore our fixture before retrying the READ-ONLY inspection.
+            self.wait(inspect_foreground, timeout=75, recover=lambda: self.debug("fixture"))
+            self.record("repeated USB tasks preserve the foreground application instead of reopening settings")
+            self.debug("clear")
+            self.debug("start")
+            services = self.shell("dumpsys", "activity", "services", PACKAGE)
+            self.wait(lambda: "isForeground=true" in self.shell("dumpsys", "activity", "services", PACKAGE))
+            self.record("unconfigured service can run in waiting-for-computer state")
+        finally:
+            if (directory / "pairing.json").exists():
+                from urllib.parse import urlparse
+                port = urlparse(json.loads((directory / "pairing.json").read_text())["endpoint"]).port
+                self.adb("reverse", "--remove", f"tcp:{port}", check=False)
 
     def run(self):
         assert self.shell("getprop", "ro.product.manufacturer").upper() == "OPPO", "Refusing to test a non-OPPO device"
@@ -308,6 +398,10 @@ class Smoke:
             assert output.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
             assert output.stat().st_mode & 0o777 == 0o600
             self.record("host CLI")
+            if self.ptc_agent:
+                self.check_ptc_agent(devices[0]["id"])
+                self.check_service_lifecycle()
+                self.check_usb_bootstrap()
         except Exception:
             state = self.shell("dumpsys", "activity", "activities", check=False)
             print("Foreground at failure:", next((line.strip() for line in state.splitlines() if line.strip().startswith("ResumedActivity:")), "unavailable"), flush=True)
@@ -360,12 +454,15 @@ def main():
     parser.add_argument("--serial", required=True, help="Explicit OPPO adb serial; no automatic device selection")
     parser.add_argument("--skip-build", action="store_true")
     parser.add_argument("--skip-install", action="store_true", help="Use an already installed build (e.g. after approving an OEM installer prompt)")
+    parser.add_argument("--ptc-agent", action="store_true", help="Also test the isolated PTC executor on the owned DiagnosticsActivity")
     arguments = parser.parse_args()
     if not arguments.skip_build:
         subprocess.run(["cargo", "build", "--locked", "-p", "gui-use-host", "-j8"], cwd=ROOT, check=True)
         subprocess.run(["./android/gradlew", "-p", "android", ":app:testDebugUnitTest", ":app:assembleDebug", "--max-workers=4", "--no-daemon"], cwd=ROOT, check=True)
+    if arguments.ptc_agent and not arguments.skip_build:
+        subprocess.run(["cargo", "build", "--locked", "-p", "gui-use-agent", "-j8"], cwd=ROOT, check=True)
     with tempfile.TemporaryDirectory(prefix="gui-use-e2e-", dir=os.environ.get("GUI_USE_TEST_TMP")) as directory:
-        smoke = Smoke(arguments.serial, directory, arguments.skip_install)
+        smoke = Smoke(arguments.serial, directory, arguments.skip_install, arguments.ptc_agent)
         smoke.run()
         print(json.dumps({"passed": len(smoke.results), "checks": smoke.results, "device": "OPPO", "cleanup": "complete"}, indent=2))
 

@@ -5,6 +5,10 @@ import java.util.UUID
 
 class AgentSettings(context: Context) {
     private val preferences = context.getSharedPreferences("connection", Context.MODE_PRIVATE)
+    var serviceEnabled: Boolean
+        get() = preferences.getBoolean("service_enabled", false)
+        set(value) { preferences.edit().putBoolean("service_enabled", value).commit() }
+    val configured: Boolean get() = runCatching { validate() }.isSuccess
     var endpoint: String
         get() = preferences.getString("endpoint", "wss://localhost:8765")!!
         set(value) { preferences.edit().putString("endpoint", value.trim()).apply() }

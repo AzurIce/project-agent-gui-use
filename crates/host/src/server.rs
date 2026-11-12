@@ -88,7 +88,7 @@ pub async fn run(directory: &Path, listen: SocketAddr) -> Result<()> {
     let state = Arc::new(State::default());
     let mut tasks = JoinSet::new();
     let connection_limit = Arc::new(Semaphore::new(32));
-    eprintln!("Listening for paired devices on wss://{listen}");
+    tracing::info!(address = %listen, "Listening for paired devices");
     loop {
         tokio::select! {
             incoming = tcp.accept() => {
@@ -104,7 +104,7 @@ pub async fn run(directory: &Path, listen: SocketAddr) -> Result<()> {
                         let socket = tokio::time::timeout(Duration::from_secs(10), accept_async_with_config(tls, Some(config))).await??;
                         connection(socket, &token, state).await
                     }.await;
-                    if result.is_err() { eprintln!("Device connection closed or rejected"); }
+                    if result.is_err() { tracing::warn!("Device connection closed or rejected"); }
                 });
             }
             incoming = control.accept() => {
@@ -193,10 +193,7 @@ where
     {
         let _ = previous.transport.0.tx.try_send(Message::Close(None));
     }
-    eprintln!(
-        "Device connected: {} (SDK {})",
-        device.hello.device.model, device.hello.device.sdk
-    );
+    tracing::info!(model = %device.hello.device.model, sdk = device.hello.device.sdk, "Device connected");
     let mut sequence = 0;
     let mut heartbeat = tokio::time::interval(Duration::from_secs(15));
     let mut last_frame = Instant::now();
