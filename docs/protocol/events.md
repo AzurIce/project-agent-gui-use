@@ -20,7 +20,7 @@
 | `type` | 事件类型 |
 | `data` | 类型相关载荷 |
 
-#protocol.events()
+<!-- protocol:events -->
 
 ## 规则
 

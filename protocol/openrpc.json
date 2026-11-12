@@ -1,0 +1,1133 @@
+{
+  "components": {
+    "schemas": {
+      "AppInfo": {
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "launchable": {
+            "type": "boolean"
+          },
+          "package_name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "package_name",
+          "label",
+          "launchable"
+        ],
+        "type": "object"
+      },
+      "AppLaunchParams": {
+        "properties": {
+          "activity": {
+            "description": "指定 Activity，省略则用 LAUNCHER 入口。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "force_stop": {
+            "description": "启动前是否强制停止。",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "package_name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "package_name"
+        ],
+        "title": "AppLaunchParams",
+        "type": "object"
+      },
+      "AppLaunchResult": {
+        "properties": {
+          "accepted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accepted"
+        ],
+        "title": "AppLaunchResult",
+        "type": "object"
+      },
+      "AppListParams": {
+        "properties": {
+          "include_system": {
+            "description": "是否包含系统应用，默认 false。",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "title": "AppListParams",
+        "type": "object"
+      },
+      "AppListResult": {
+        "properties": {
+          "apps": {
+            "items": {
+              "$ref": "#/components/schemas/AppInfo"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "apps"
+        ],
+        "title": "AppListResult",
+        "type": "object"
+      },
+      "Bounds": {
+        "properties": {
+          "bottom": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "left": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "right": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "top": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ],
+        "type": "object"
+      },
+      "GesturePoint": {
+        "properties": {
+          "x": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "y": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ],
+        "type": "object"
+      },
+      "GestureStroke": {
+        "properties": {
+          "duration_ms": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/GesturePoint"
+            },
+            "type": "array"
+          },
+          "start_ms": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "points"
+        ],
+        "type": "object"
+      },
+      "Node": {
+        "properties": {
+          "actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "bounds": {
+            "$ref": "#/components/schemas/Bounds"
+          },
+          "class_name": {
+            "type": "string"
+          },
+          "desc": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "flags": {
+            "$ref": "#/components/schemas/NodeFlags"
+          },
+          "id": {
+            "type": "string"
+          },
+          "parent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "view_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "class_name",
+          "bounds",
+          "flags",
+          "actions"
+        ],
+        "type": "object"
+      },
+      "NodeFlags": {
+        "properties": {
+          "checkable": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "clickable": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "editable": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "focused": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "scrollable": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "selected": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "NotificationAction": {
+        "properties": {
+          "index": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "remote_input": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "title",
+          "remote_input"
+        ],
+        "type": "object"
+      },
+      "NotificationInfo": {
+        "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationAction"
+            },
+            "type": "array"
+          },
+          "key": {
+            "type": "string"
+          },
+          "ongoing": {
+            "type": "boolean"
+          },
+          "package_name": {
+            "type": "string"
+          },
+          "posted_at": {
+            "type": "string"
+          },
+          "text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "package_name",
+          "posted_at",
+          "ongoing",
+          "actions"
+        ],
+        "type": "object"
+      },
+      "NotificationListParams": {
+        "properties": {
+          "limit": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "title": "NotificationListParams",
+        "type": "object"
+      },
+      "NotificationListResult": {
+        "properties": {
+          "notifications": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationInfo"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "notifications"
+        ],
+        "title": "NotificationListResult",
+        "type": "object"
+      },
+      "NotificationPostedData": {
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "package_name": {
+            "type": "string"
+          },
+          "posted_at": {
+            "type": "string"
+          },
+          "text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "package_name",
+          "posted_at"
+        ],
+        "title": "NotificationPostedData",
+        "type": "object"
+      },
+      "NotificationRemovedData": {
+        "properties": {
+          "key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "title": "NotificationRemovedData",
+        "type": "object"
+      },
+      "NotificationReplyParams": {
+        "properties": {
+          "action_index": {
+            "description": "默认为第一个带 remote input 的 action。",
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "key": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "text"
+        ],
+        "title": "NotificationReplyParams",
+        "type": "object"
+      },
+      "NotificationReplyResult": {
+        "properties": {
+          "sent": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "sent"
+        ],
+        "title": "NotificationReplyResult",
+        "type": "object"
+      },
+      "ScreenStateData": {
+        "properties": {
+          "interactive": {
+            "type": "boolean"
+          },
+          "locked": {
+            "type": "boolean"
+          },
+          "on": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "on",
+          "interactive",
+          "locked"
+        ],
+        "title": "ScreenStateData",
+        "type": "object"
+      },
+      "UiActParams": {
+        "properties": {
+          "action": {
+            "description": "`click`、`long_click`、`set_text`、`clear_text`、`focus`、`scroll_forward`、`scroll_backward`、`select`。",
+            "type": "string"
+          },
+          "node": {
+            "type": "string"
+          },
+          "text": {
+            "description": "`set_text` 使用。",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "node",
+          "action"
+        ],
+        "title": "UiActParams",
+        "type": "object"
+      },
+      "UiActResult": {
+        "properties": {
+          "changed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "changed"
+        ],
+        "title": "UiActResult",
+        "type": "object"
+      },
+      "UiContentChangedData": {
+        "properties": {
+          "activity": {
+            "type": "string"
+          },
+          "kinds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "package_name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "package_name",
+          "activity",
+          "kinds"
+        ],
+        "title": "UiContentChangedData",
+        "type": "object"
+      },
+      "UiGestureParams": {
+        "properties": {
+          "strokes": {
+            "items": {
+              "$ref": "#/components/schemas/GestureStroke"
+            },
+            "type": "array"
+          },
+          "timeout_ms": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "strokes"
+        ],
+        "title": "UiGestureParams",
+        "type": "object"
+      },
+      "UiGestureResult": {
+        "properties": {
+          "performed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "performed"
+        ],
+        "title": "UiGestureResult",
+        "type": "object"
+      },
+      "UiIdleData": {
+        "properties": {
+          "since_seq": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "since_seq"
+        ],
+        "title": "UiIdleData",
+        "type": "object"
+      },
+      "UiScreenshotInfo": {
+        "properties": {
+          "bytes": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "height": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "mime": {
+            "type": "string"
+          },
+          "width": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "mime",
+          "width",
+          "height",
+          "bytes"
+        ],
+        "title": "UiScreenshotInfo",
+        "type": "object"
+      },
+      "UiScreenshotParams": {
+        "properties": {
+          "max_width": {
+            "description": "缩放上限，默认不缩放。",
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "title": "UiScreenshotParams",
+        "type": "object"
+      },
+      "UiSnapshotParams": {
+        "properties": {
+          "filter": {
+            "description": "`actionable` 或 `all`，默认 `actionable`。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "max_nodes": {
+            "description": "节点上限，默认 800。",
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "title": "UiSnapshotParams",
+        "type": "object"
+      },
+      "UiSnapshotResult": {
+        "properties": {
+          "activity": {
+            "type": "string"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/Node"
+            },
+            "type": "array"
+          },
+          "package_name": {
+            "type": "string"
+          },
+          "seq": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "seq",
+          "package_name",
+          "activity",
+          "truncated",
+          "nodes"
+        ],
+        "title": "UiSnapshotResult",
+        "type": "object"
+      },
+      "UiTextChangedData": {
+        "properties": {
+          "node_hint": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_hint",
+          "text"
+        ],
+        "title": "UiTextChangedData",
+        "type": "object"
+      },
+      "UiWaitParams": {
+        "properties": {
+          "timeout_ms": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "until": {
+            "description": "`idle`、`window` 或 `text`。",
+            "type": "string"
+          },
+          "value": {
+            "description": "`window` 时为包名，`text` 时为子串。",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "until"
+        ],
+        "title": "UiWaitParams",
+        "type": "object"
+      },
+      "UiWaitResult": {
+        "properties": {
+          "matched": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "matched"
+        ],
+        "title": "UiWaitResult",
+        "type": "object"
+      },
+      "UiWindowChangedData": {
+        "properties": {
+          "activity": {
+            "type": "string"
+          },
+          "package_name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "package_name",
+          "activity"
+        ],
+        "title": "UiWindowChangedData",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Android 设备提供的操作。Rust 通过 `DeviceClient` 调用，Kotlin 实现同名接口。",
+    "title": "Device",
+    "version": "0.1.0"
+  },
+  "methods": [
+    {
+      "description": "列出可启动的应用。\n\n默认只返回带 LAUNCHER 入口的包。\n\n```json\n{\"include_system\": false}\n```\n\n```json\n{\"apps\": [{\"package_name\": \"com.tencent.mm\", \"label\": \"微信\", \"launchable\": true}]}\n```",
+      "name": "app.list",
+      "paramStructure": "by-name",
+      "params": [
+        {
+          "description": "是否包含系统应用，默认 false。",
+          "name": "include_system",
+          "required": false,
+          "schema": {
+            "description": "是否包含系统应用，默认 false。",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/AppListResult"
+        }
+      },
+      "summary": "列出可启动的应用。"
+    },
+    {
+      "description": "启动应用。\n\n返回只表示请求已被接受，真正成功以 `ui.window_changed` 为准。\n\n```json\n{\"package_name\": \"com.tencent.mm\"}\n```\n\n```json\n{\"accepted\": true}\n```",
+      "name": "app.launch",
+      "paramStructure": "by-name",
+      "params": [
+        {
+          "description": "",
+          "name": "package_name",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "指定 Activity，省略则用 LAUNCHER 入口。",
+          "name": "activity",
+          "required": false,
+          "schema": {
+            "description": "指定 Activity，省略则用 LAUNCHER 入口。",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        {
+          "description": "启动前是否强制停止。",
+          "name": "force_stop",
+          "required": false,
+          "schema": {
+            "description": "启动前是否强制停止。",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/AppLaunchResult"
+        }
+      },
+      "summary": "启动应用。"
+    },
+    {
+      "description": "读取当前窗口的节点树。\n\n`seq` 对应该次快照观察到的最后一个事件序号。\n节点 id 只在本次快照内有效，跨快照需要按指纹重新匹配。\n\n```json\n{\"filter\": \"actionable\"}\n```\n\n```json\n{\"seq\": 42, \"package_name\": \"com.tencent.mm\", \"activity\": \".ui.LauncherUI\", \"truncated\": false, \"nodes\": []}\n```",
+      "name": "ui.snapshot",
+      "paramStructure": "by-name",
+      "params": [
+        {
+          "description": "`actionable` 或 `all`，默认 `actionable`。",
+          "name": "filter",
+          "required": false,
+          "schema": {
+            "description": "`actionable` 或 `all`，默认 `actionable`。",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        {
+          "description": "节点上限，默认 800。",
+          "name": "max_nodes",
+          "required": false,
+          "schema": {
+            "description": "节点上限，默认 800。",
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/UiSnapshotResult"
+        }
+      },
+      "summary": "读取当前窗口的节点树。"
+    },
+    {
+      "description": "按节点执行语义动作。\n\n节点动作不被支持时返回 `2002`，由调用方决定是否改用祖先节点或手势。\n\n```json\n{\"node\": \"n7\", \"action\": \"click\"}\n```\n\n```json\n{\"changed\": true}\n```",
+      "name": "ui.act",
+      "paramStructure": "by-name",
+      "params": [
+        {
+          "description": "",
+          "name": "node",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "`click`、`long_click`、`set_text`、`clear_text`、`focus`、`scroll_forward`、`scroll_backward`、`select`。",
+          "name": "action",
+          "required": true,
+          "schema": {
+            "description": "`click`、`long_click`、`set_text`、`clear_text`、`focus`、`scroll_forward`、`scroll_backward`、`select`。",
+            "type": "string"
+          }
+        },
+        {
+          "description": "`set_text` 使用。",
+          "name": "text",
+          "required": false,
+          "schema": {
+            "description": "`set_text` 使用。",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/UiActResult"
+        }
+      },
+      "summary": "按节点执行语义动作。"
+    },
+    {
+      "description": "执行原始手势。\n\n同一手势最多 10 个 stroke，总时长不超过 60 秒。\n\n```json\n{\"strokes\": [{\"points\": [{\"x\": 540, \"y\": 1800}, {\"x\": 540, \"y\": 600}], \"duration_ms\": 300}]}\n```\n\n```json\n{\"performed\": true}\n```",
+      "name": "ui.gesture",
+      "paramStructure": "by-name",
+      "params": [
+        {
+          "description": "",
+          "name": "strokes",
+          "required": true,
+          "schema": {
+            "items": {
+              "$ref": "#/components/schemas/GestureStroke"
+            },
+            "type": "array"
+          }
+        },
+        {
+          "description": "",
+          "name": "timeout_ms",
+          "required": false,
+          "schema": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/UiGestureResult"
+        }
+      },
+      "summary": "执行原始手势。"
+    },
+    {
+      "description": "等待界面进入稳定状态。\n\n`idle` 表示连续 300 毫秒没有新的界面事件。\n\n```json\n{\"until\": \"idle\", \"timeout_ms\": 5000}\n```\n\n```json\n{\"matched\": true}\n```",
+      "name": "ui.wait",
+      "paramStructure": "by-name",
+      "params": [
+        {
+          "description": "`idle`、`window` 或 `text`。",
+          "name": "until",
+          "required": true,
+          "schema": {
+            "description": "`idle`、`window` 或 `text`。",
+            "type": "string"
+          }
+        },
+        {
+          "description": "`window` 时为包名，`text` 时为子串。",
+          "name": "value",
+          "required": false,
+          "schema": {
+            "description": "`window` 时为包名，`text` 时为子串。",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        {
+          "description": "",
+          "name": "timeout_ms",
+          "required": false,
+          "schema": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/UiWaitResult"
+        }
+      },
+      "summary": "等待界面进入稳定状态。"
+    },
+    {
+      "description": "抓取一帧画面。\n\nJSON-RPC 返回图片元数据；图片字节使用独立的二进制消息传输。\n\n```json\n{\"max_width\": 720}\n```\n\n```json\n{\"mime\": \"image/png\", \"width\": 540, \"height\": 1200, \"bytes\": 184320}\n```",
+      "name": "ui.screenshot",
+      "paramStructure": "by-name",
+      "params": [
+        {
+          "description": "缩放上限，默认不缩放。",
+          "name": "max_width",
+          "required": false,
+          "schema": {
+            "description": "缩放上限，默认不缩放。",
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/UiScreenshotInfo"
+        }
+      },
+      "summary": "抓取一帧画面。"
+    },
+    {
+      "description": "读取当前活跃通知。\n\n没有历史回填；服务连接时仍然活跃的通知可以读取。\n\n```json\n{\"limit\": 20}\n```\n\n```json\n{\"notifications\": [{\"key\": \"0|com.tencent.mm|1|null|10001\", \"package_name\": \"com.tencent.mm\", \"title\": \"小明\", \"text\": \"明天几点出发？\", \"posted_at\": \"2026-11-12T01:23:45.678Z\", \"ongoing\": false, \"actions\": []}]}\n```",
+      "name": "notification.list",
+      "paramStructure": "by-name",
+      "params": [
+        {
+          "description": "",
+          "name": "limit",
+          "required": false,
+          "schema": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/NotificationListResult"
+        }
+      },
+      "summary": "读取当前活跃通知。"
+    },
+    {
+      "description": "通过通知自带的 RemoteInput 回复。\n\n不打开界面。\n\n```json\n{\"key\": \"0|com.tencent.mm|1|null|10001\", \"text\": \"八点\"}\n```\n\n```json\n{\"sent\": true}\n```",
+      "name": "notification.reply",
+      "paramStructure": "by-name",
+      "params": [
+        {
+          "description": "",
+          "name": "key",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "",
+          "name": "text",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "默认为第一个带 remote input 的 action。",
+          "name": "action_index",
+          "required": false,
+          "schema": {
+            "description": "默认为第一个带 remote input 的 action。",
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      ],
+      "result": {
+        "name": "result",
+        "schema": {
+          "$ref": "#/components/schemas/NotificationReplyResult"
+        }
+      },
+      "summary": "通过通知自带的 RemoteInput 回复。"
+    }
+  ],
+  "openrpc": "1.3.2",
+  "x-event-envelope": {
+    "dataField": "params.data",
+    "direction": "device-to-host",
+    "method": "events",
+    "sequenceField": "params.seq",
+    "timestampField": "params.ts",
+    "typeField": "params.type"
+  },
+  "x-events": [
+    {
+      "description": "通知出现或内容更新。",
+      "name": "notification.posted",
+      "schema": {
+        "$ref": "#/components/schemas/NotificationPostedData"
+      },
+      "x-merge": "不合并，按 key 更新"
+    },
+    {
+      "description": "通知被撤下。",
+      "name": "notification.removed",
+      "schema": {
+        "$ref": "#/components/schemas/NotificationRemovedData"
+      },
+      "x-merge": "不合并"
+    },
+    {
+      "description": "前台窗口变化。",
+      "name": "ui.window_changed",
+      "schema": {
+        "$ref": "#/components/schemas/UiWindowChangedData"
+      },
+      "x-merge": "保留最后一条"
+    },
+    {
+      "description": "界面内容变化。",
+      "name": "ui.content_changed",
+      "schema": {
+        "$ref": "#/components/schemas/UiContentChangedData"
+      },
+      "x-merge": "300ms 内合并"
+    },
+    {
+      "description": "输入框文本变化。",
+      "name": "ui.text_changed",
+      "schema": {
+        "$ref": "#/components/schemas/UiTextChangedData"
+      },
+      "x-merge": "300ms 内合并"
+    },
+    {
+      "description": "连续 300 毫秒没有界面事件。",
+      "name": "ui.idle",
+      "schema": {
+        "$ref": "#/components/schemas/UiIdleData"
+      },
+      "x-merge": "保留最后一条"
+    },
+    {
+      "description": "熄屏、锁屏、交互状态变化。",
+      "name": "screen.state",
+      "schema": {
+        "$ref": "#/components/schemas/ScreenStateData"
+      },
+      "x-merge": "保留最后一条"
+    }
+  ]
+}

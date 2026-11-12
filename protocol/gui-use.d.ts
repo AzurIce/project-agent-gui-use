@@ -10,7 +10,9 @@ export interface AppInfo {
 
 export interface AppLaunchParams {
 	package_name: string;
+	/** 指定 Activity，省略则用 LAUNCHER 入口。 */
 	activity?: string;
+	/** 启动前是否强制停止。 */
 	force_stop?: boolean;
 }
 
@@ -19,6 +21,7 @@ export interface AppLaunchResult {
 }
 
 export interface AppListParams {
+	/** 是否包含系统应用，默认 false。 */
 	include_system?: boolean;
 }
 
@@ -105,6 +108,7 @@ export interface NotificationRemovedData {
 export interface NotificationReplyParams {
 	key: string;
 	text: string;
+	/** 默认为第一个带 remote input 的 action。 */
 	action_index?: number;
 }
 
@@ -120,7 +124,9 @@ export interface ScreenStateData {
 
 export interface UiActParams {
 	node: string;
+	/** `click`、`long_click`、`set_text`、`clear_text`、`focus`、`scroll_forward`、`scroll_backward`、`select`。 */
 	action: string;
+	/** `set_text` 使用。 */
 	text?: string;
 }
 
@@ -155,11 +161,14 @@ export interface UiScreenshotInfo {
 }
 
 export interface UiScreenshotParams {
+	/** 缩放上限，默认不缩放。 */
 	max_width?: number;
 }
 
 export interface UiSnapshotParams {
+	/** `actionable` 或 `all`，默认 `actionable`。 */
 	filter?: string;
+	/** 节点上限，默认 800。 */
 	max_nodes?: number;
 }
 
@@ -177,7 +186,9 @@ export interface UiTextChangedData {
 }
 
 export interface UiWaitParams {
+	/** `idle`、`window` 或 `text`。 */
 	until: string;
+	/** `window` 时为包名，`text` 时为子串。 */
 	value?: string;
 	timeout_ms?: number;
 }

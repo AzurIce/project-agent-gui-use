@@ -17,7 +17,9 @@ data class AppInfo (
 @Serializable
 data class AppLaunchParams (
 	val package_name: String,
+	/// 指定 Activity，省略则用 LAUNCHER 入口。
 	val activity: String? = null,
+	/// 启动前是否强制停止。
 	val force_stop: Boolean? = null
 )
 
@@ -28,6 +30,7 @@ data class AppLaunchResult (
 
 @Serializable
 data class AppListParams (
+	/// 是否包含系统应用，默认 false。
 	val include_system: Boolean? = null
 )
 
@@ -127,6 +130,7 @@ data class NotificationRemovedData (
 data class NotificationReplyParams (
 	val key: String,
 	val text: String,
+	/// 默认为第一个带 remote input 的 action。
 	val action_index: Int? = null
 )
 
@@ -145,7 +149,9 @@ data class ScreenStateData (
 @Serializable
 data class UiActParams (
 	val node: String,
+	/// `click`、`long_click`、`set_text`、`clear_text`、`focus`、`scroll_forward`、`scroll_backward`、`select`。
 	val action: String,
+	/// `set_text` 使用。
 	val text: String? = null
 )
 
@@ -187,12 +193,15 @@ data class UiScreenshotInfo (
 
 @Serializable
 data class UiScreenshotParams (
+	/// 缩放上限，默认不缩放。
 	val max_width: Int? = null
 )
 
 @Serializable
 data class UiSnapshotParams (
+	/// `actionable` 或 `all`，默认 `actionable`。
 	val filter: String? = null,
+	/// 节点上限，默认 800。
 	val max_nodes: Int? = null
 )
 
@@ -213,7 +222,9 @@ data class UiTextChangedData (
 
 @Serializable
 data class UiWaitParams (
+	/// `idle`、`window` 或 `text`。
 	val until: String,
+	/// `window` 时为包名，`text` 时为子串。
 	val value: String? = null,
 	val timeout_ms: Int? = null
 )

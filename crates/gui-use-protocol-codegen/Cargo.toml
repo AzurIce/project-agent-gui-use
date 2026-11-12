@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 gui-use-protocol = { path = "../gui-use-protocol" }
 serde_json = "1"
+typeshare-core = "=1.13.4"

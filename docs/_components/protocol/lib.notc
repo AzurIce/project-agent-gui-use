@@ -1,22 +1,10 @@
-// 由 protocol/registry.json 构造方法文档。数据由 just protocol 生成，正文在构建期组装。
-fn page() -> BlockContent {
-    let root = data_expect<Data>(read_json(p"../../../protocol/registry.json"));
-    let methods = data_expect<Array<Data>>(data_require<Array<Data>>(root, "methods"));
-    let types = data_expect<Array<Data>>(data_require<Array<Data>>(root, "types"));
-    let sections = for method in methods { method_section(method) };
-    let type_sections = for entry in types { type_section(entry) };
-    [
-        #index(methods)
-
-        #sections
-
-        #heading<2>[类型]
-
-        #type_sections
-    ]
+// Rust 只导出数据；文档注释由 SSG extension 插入 Markdown，字段与类型由此构造。
+fn registry() -> Data {
+    data_expect<Data>(read_json(p"../../../protocol/registry.json"))
 }
 
-fn index(methods: Array<Data>) -> BlockContent {
+fn index() -> BlockContent {
+    let methods = data_expect<Array<Data>>(data_require<Array<Data>>(registry(), "methods"));
     let rows = for method in methods {
         let name = data_expect<String>(data_require<String>(method, "name"));
         let params = data_expect<String>(data_require<String>(method, "params_type"));
@@ -35,45 +23,24 @@ fn index(methods: Array<Data>) -> BlockContent {
     ]
 }
 
-fn method_section(method: Data) -> BlockContent {
-    let name = data_expect<String>(data_require<String>(method, "name"));
-    let summary = data_expect<String>(data_require<String>(method, "summary"));
-    let notes = data_expect<String>(data_require<String>(method, "notes"));
-    let request = data_expect<String>(data_require<String>(method, "request"));
-    let response = data_expect<String>(data_require<String>(method, "response"));
-    let params = data_expect<Array<Data>>(data_require<Array<Data>>(method, "params"));
-    let result = data_expect<Array<Data>>(data_require<Array<Data>>(method, "result"));
-    [
-        #heading<2>[#raw(name)]
-
-        #paragraph()[#text(text: summary)]
-
-        #paragraph()[#text(text: notes)]
-
-        #heading<3>[参数]
-
-        #field_table(params)
-
-        #heading<3>[返回]
-
-        #field_table(result)
-
-        #heading<3>[示例]
-
-        #raw<BlockContent>(text: request)
-
-        #raw<BlockContent>(text: response)
-    ]
+fn method_fields(index: Int, key: String) -> BlockContent {
+    let methods = data_expect<Data>(data_require<Data>(registry(), "methods"));
+    let method = data_expect<Data>(data_require_index<Data>(methods, index));
+    let fields = data_expect<Array<Data>>(data_require<Array<Data>>(method, key));
+    field_table(fields)
 }
 
-fn type_section(entry: Data) -> BlockContent {
-    let name = data_expect<String>(data_require<String>(entry, "name"));
-    let fields = data_expect<Array<Data>>(data_require<Array<Data>>(entry, "fields"));
-    [
-        #heading<3>[#raw(name)]
+fn types() -> BlockContent {
+    let types = data_expect<Array<Data>>(data_require<Array<Data>>(registry(), "types"));
+    for entry in types {
+        let name = data_expect<String>(data_require<String>(entry, "name"));
+        let fields = data_expect<Array<Data>>(data_require<Array<Data>>(entry, "fields"));
+        [
+            #heading<3>[#raw(name)]
 
-        #field_table(fields)
-    ]
+            #field_table(fields)
+        ]
+    }
 }
 
 fn field_table(fields: Array<Data>) -> BlockContent {
@@ -96,9 +63,8 @@ fn field_table(fields: Array<Data>) -> BlockContent {
     ]
 }
 
-fn events() -> BlockContent {
-    let root = data_expect<Data>(read_json(p"../../../protocol/registry.json"));
-    let events = data_expect<Array<Data>>(data_require<Array<Data>>(root, "events"));
+fn event_index() -> BlockContent {
+    let events = data_expect<Array<Data>>(data_require<Array<Data>>(registry(), "events"));
     let rows = for event in events {
         let name = data_expect<String>(data_require<String>(event, "name"));
         let data_type = data_expect<String>(data_require<String>(event, "data_type"));
@@ -109,31 +75,15 @@ fn events() -> BlockContent {
             #cell[#text(text: merge)]
         ]
     };
-    let sections = for event in events { event_section(event) };
-    [
-        #table()[
-            #row(header: true)[#cell[事件] #cell[数据] #cell[合并策略]]
-            #rows
-        ]
-
-        #sections
+    table()[
+        #row(header: true)[#cell[事件] #cell[数据] #cell[合并策略]]
+        #rows
     ]
 }
 
-fn event_section(event: Data) -> BlockContent {
-    let name = data_expect<String>(data_require<String>(event, "name"));
-    let notes = data_expect<String>(data_require<String>(event, "notes"));
-    let merge = data_expect<String>(data_require<String>(event, "merge"));
+fn event_fields(index: Int) -> BlockContent {
+    let events = data_expect<Data>(data_require<Data>(registry(), "events"));
+    let event = data_expect<Data>(data_require_index<Data>(events, index));
     let fields = data_expect<Array<Data>>(data_require<Array<Data>>(event, "fields"));
-    [
-        #heading<2>[#raw(name)]
-
-        #paragraph()[#text(text: notes)]
-
-        #paragraph()[合并策略：#raw(merge)]
-
-        #heading<3>[数据]
-
-        #field_table(fields)
-    ]
+    field_table(fields)
 }

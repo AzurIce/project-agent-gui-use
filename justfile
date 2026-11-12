@@ -14,27 +14,28 @@ build-host:
     cargo build
 
 # 构建文档站点
-docs:
+docs: protocol
     notist build
 
 # 本地预览文档
-serve-docs:
+serve-docs: protocol
     notist serve
 
-# 从 Rust 协议定义重新生成 Kotlin 类型、方法接口、文档表格与清单
+# 只用 Cargo 生成 Kotlin、TypeScript、OpenRPC 与文档数据
 protocol:
-    cargo run -q -p gui-use-protocol-codegen
-    typeshare crates/gui-use-protocol --lang=kotlin --java-package dev.azurice.guiuse.protocol --output-file android/app/src/main/java/dev/azurice/guiuse/protocol/Types.kt
-    typeshare crates/gui-use-protocol --lang=typescript --output-file protocol/gui-use.d.ts
+    cargo run -q --locked -p gui-use-protocol-codegen
 
 # 检查生成产物是否与 Rust 定义一致
 protocol-check:
-    just protocol
-    test -z "$(git status --porcelain -- android/app/src/main/java/dev/azurice/guiuse/protocol protocol)"
+    cargo run -q --locked -p gui-use-protocol-codegen -- --check
 
 fmt:
     cargo fmt --all
 
 check:
     cargo fmt --all -- --check
-    cargo clippy --workspace --all-targets -- -D warnings
+    cargo clippy --workspace --all-targets -j8 -- -D warnings
+
+test:
+    cargo test --workspace -j8 -- --test-threads=4
+    python3 -m unittest discover -s scripts -p 'test_*.py'

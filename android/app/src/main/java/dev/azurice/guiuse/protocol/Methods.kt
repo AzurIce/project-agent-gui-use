@@ -2,6 +2,13 @@
 package dev.azurice.guiuse.protocol
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
 
 object Methods {
     const val APP_LIST = "app.list"
@@ -15,93 +22,254 @@ object Methods {
     const val NOTIFICATION_REPLY = "notification.reply"
 }
 
-interface AppListHandler {
-    suspend fun handle(params: AppListParams): AppListResult
-}
+/**
+ * Android 设备提供的操作。Rust 通过 `DeviceClient` 调用，Kotlin 实现同名接口。
+ */
+interface Device {
+    /**
+     * 列出可启动的应用。
+     *
+     * 默认只返回带 LAUNCHER 入口的包。
+     *
+     * ```json
+     * {"include_system": false}
+     * ```
+     *
+     * ```json
+     * {"apps": [{"package_name": "com.tencent.mm", "label": "微信", "launchable": true}]}
+     * ```
+     * @param includeSystem 是否包含系统应用，默认 false。
+     */
+    suspend fun appList(includeSystem: Boolean? = null): AppListResult
 
-interface AppLaunchHandler {
-    suspend fun handle(params: AppLaunchParams): AppLaunchResult
-}
+    /**
+     * 启动应用。
+     *
+     * 返回只表示请求已被接受，真正成功以 `ui.window_changed` 为准。
+     *
+     * ```json
+     * {"package_name": "com.tencent.mm"}
+     * ```
+     *
+     * ```json
+     * {"accepted": true}
+     * ```
+     * @param activity 指定 Activity，省略则用 LAUNCHER 入口。
+     * @param forceStop 启动前是否强制停止。
+     */
+    suspend fun appLaunch(packageName: String, activity: String? = null, forceStop: Boolean? = null): AppLaunchResult
 
-interface UiSnapshotHandler {
-    suspend fun handle(params: UiSnapshotParams): UiSnapshotResult
-}
+    /**
+     * 读取当前窗口的节点树。
+     *
+     * `seq` 对应该次快照观察到的最后一个事件序号。
+     * 节点 id 只在本次快照内有效，跨快照需要按指纹重新匹配。
+     *
+     * ```json
+     * {"filter": "actionable"}
+     * ```
+     *
+     * ```json
+     * {"seq": 42, "package_name": "com.tencent.mm", "activity": ".ui.LauncherUI", "truncated": false, "nodes": []}
+     * ```
+     * @param filter `actionable` 或 `all`，默认 `actionable`。
+     * @param maxNodes 节点上限，默认 800。
+     */
+    suspend fun uiSnapshot(filter: String? = null, maxNodes: Int? = null): UiSnapshotResult
 
-interface UiActHandler {
-    suspend fun handle(params: UiActParams): UiActResult
-}
+    /**
+     * 按节点执行语义动作。
+     *
+     * 节点动作不被支持时返回 `2002`，由调用方决定是否改用祖先节点或手势。
+     *
+     * ```json
+     * {"node": "n7", "action": "click"}
+     * ```
+     *
+     * ```json
+     * {"changed": true}
+     * ```
+     * @param action `click`、`long_click`、`set_text`、`clear_text`、`focus`、`scroll_forward`、`scroll_backward`、`select`。
+     * @param text `set_text` 使用。
+     */
+    suspend fun uiAct(node: String, action: String, text: String? = null): UiActResult
 
-interface UiGestureHandler {
-    suspend fun handle(params: UiGestureParams): UiGestureResult
-}
+    /**
+     * 执行原始手势。
+     *
+     * 同一手势最多 10 个 stroke，总时长不超过 60 秒。
+     *
+     * ```json
+     * {"strokes": [{"points": [{"x": 540, "y": 1800}, {"x": 540, "y": 600}], "duration_ms": 300}]}
+     * ```
+     *
+     * ```json
+     * {"performed": true}
+     * ```
+     */
+    suspend fun uiGesture(strokes: List<GestureStroke>, timeoutMs: Int? = null): UiGestureResult
 
-interface UiWaitHandler {
-    suspend fun handle(params: UiWaitParams): UiWaitResult
-}
+    /**
+     * 等待界面进入稳定状态。
+     *
+     * `idle` 表示连续 300 毫秒没有新的界面事件。
+     *
+     * ```json
+     * {"until": "idle", "timeout_ms": 5000}
+     * ```
+     *
+     * ```json
+     * {"matched": true}
+     * ```
+     * @param until `idle`、`window` 或 `text`。
+     * @param value `window` 时为包名，`text` 时为子串。
+     */
+    suspend fun uiWait(until: String, value: String? = null, timeoutMs: Int? = null): UiWaitResult
 
-interface UiScreenshotHandler {
-    suspend fun handle(params: UiScreenshotParams): UiScreenshotInfo
-}
+    /**
+     * 抓取一帧画面。
+     *
+     * JSON-RPC 返回图片元数据；图片字节使用独立的二进制消息传输。
+     *
+     * ```json
+     * {"max_width": 720}
+     * ```
+     *
+     * ```json
+     * {"mime": "image/png", "width": 540, "height": 1200, "bytes": 184320}
+     * ```
+     * @param maxWidth 缩放上限，默认不缩放。
+     */
+    suspend fun uiScreenshot(maxWidth: Int? = null): UiScreenshotInfo
 
-interface NotificationListHandler {
-    suspend fun handle(params: NotificationListParams): NotificationListResult
-}
+    /**
+     * 读取当前活跃通知。
+     *
+     * 没有历史回填；服务连接时仍然活跃的通知可以读取。
+     *
+     * ```json
+     * {"limit": 20}
+     * ```
+     *
+     * ```json
+     * {"notifications": [{"key": "0|com.tencent.mm|1|null|10001", "package_name": "com.tencent.mm", "title": "小明", "text": "明天几点出发？", "posted_at": "2026-11-12T01:23:45.678Z", "ongoing": false, "actions": []}]}
+     * ```
+     */
+    suspend fun notificationList(limit: Int? = null): NotificationListResult
 
-interface NotificationReplyHandler {
-    suspend fun handle(params: NotificationReplyParams): NotificationReplyResult
-}
+    /**
+     * 通过通知自带的 RemoteInput 回复。
+     *
+     * 不打开界面。
+     *
+     * ```json
+     * {"key": "0|com.tencent.mm|1|null|10001", "text": "八点"}
+     * ```
+     *
+     * ```json
+     * {"sent": true}
+     * ```
+     * @param actionIndex 默认为第一个带 remote input 的 action。
+     */
+    suspend fun notificationReply(key: String, text: String, actionIndex: Int? = null): NotificationReplyResult
 
-interface Handlers {
-    val appList: AppListHandler
-    val appLaunch: AppLaunchHandler
-    val uiSnapshot: UiSnapshotHandler
-    val uiAct: UiActHandler
-    val uiGesture: UiGestureHandler
-    val uiWait: UiWaitHandler
-    val uiScreenshot: UiScreenshotHandler
-    val notificationList: NotificationListHandler
-    val notificationReply: NotificationReplyHandler
 }
 
 object ProtocolDispatch {
-    suspend fun dispatch(method: String, params: String, json: Json, handlers: Handlers): String =
+    suspend fun dispatch(method: String, params: JsonElement, json: Json, device: Device): JsonElement =
         when (method) {
-            Methods.APP_LIST -> json.encodeToString(
-                AppListResult.serializer(),
-                handlers.appList.handle(json.decodeFromString(AppListParams.serializer(), params)),
-            )
-            Methods.APP_LAUNCH -> json.encodeToString(
-                AppLaunchResult.serializer(),
-                handlers.appLaunch.handle(json.decodeFromString(AppLaunchParams.serializer(), params)),
-            )
-            Methods.UI_SNAPSHOT -> json.encodeToString(
-                UiSnapshotResult.serializer(),
-                handlers.uiSnapshot.handle(json.decodeFromString(UiSnapshotParams.serializer(), params)),
-            )
-            Methods.UI_ACT -> json.encodeToString(
-                UiActResult.serializer(),
-                handlers.uiAct.handle(json.decodeFromString(UiActParams.serializer(), params)),
-            )
-            Methods.UI_GESTURE -> json.encodeToString(
-                UiGestureResult.serializer(),
-                handlers.uiGesture.handle(json.decodeFromString(UiGestureParams.serializer(), params)),
-            )
-            Methods.UI_WAIT -> json.encodeToString(
-                UiWaitResult.serializer(),
-                handlers.uiWait.handle(json.decodeFromString(UiWaitParams.serializer(), params)),
-            )
-            Methods.UI_SCREENSHOT -> json.encodeToString(
-                UiScreenshotInfo.serializer(),
-                handlers.uiScreenshot.handle(json.decodeFromString(UiScreenshotParams.serializer(), params)),
-            )
-            Methods.NOTIFICATION_LIST -> json.encodeToString(
-                NotificationListResult.serializer(),
-                handlers.notificationList.handle(json.decodeFromString(NotificationListParams.serializer(), params)),
-            )
-            Methods.NOTIFICATION_REPLY -> json.encodeToString(
-                NotificationReplyResult.serializer(),
-                handlers.notificationReply.handle(json.decodeFromString(NotificationReplyParams.serializer(), params)),
-            )
+            Methods.APP_LIST -> {
+                val decoded = json.decodeFromJsonElement<AppListParams>(params)
+                json.encodeToJsonElement(device.appList(decoded.include_system))
+            }
+            Methods.APP_LAUNCH -> {
+                val decoded = json.decodeFromJsonElement<AppLaunchParams>(params)
+                json.encodeToJsonElement(device.appLaunch(decoded.package_name, decoded.activity, decoded.force_stop))
+            }
+            Methods.UI_SNAPSHOT -> {
+                val decoded = json.decodeFromJsonElement<UiSnapshotParams>(params)
+                json.encodeToJsonElement(device.uiSnapshot(decoded.filter, decoded.max_nodes))
+            }
+            Methods.UI_ACT -> {
+                val decoded = json.decodeFromJsonElement<UiActParams>(params)
+                json.encodeToJsonElement(device.uiAct(decoded.node, decoded.action, decoded.text))
+            }
+            Methods.UI_GESTURE -> {
+                val decoded = json.decodeFromJsonElement<UiGestureParams>(params)
+                json.encodeToJsonElement(device.uiGesture(decoded.strokes, decoded.timeout_ms))
+            }
+            Methods.UI_WAIT -> {
+                val decoded = json.decodeFromJsonElement<UiWaitParams>(params)
+                json.encodeToJsonElement(device.uiWait(decoded.until, decoded.value, decoded.timeout_ms))
+            }
+            Methods.UI_SCREENSHOT -> {
+                val decoded = json.decodeFromJsonElement<UiScreenshotParams>(params)
+                json.encodeToJsonElement(device.uiScreenshot(decoded.max_width))
+            }
+            Methods.NOTIFICATION_LIST -> {
+                val decoded = json.decodeFromJsonElement<NotificationListParams>(params)
+                json.encodeToJsonElement(device.notificationList(decoded.limit))
+            }
+            Methods.NOTIFICATION_REPLY -> {
+                val decoded = json.decodeFromJsonElement<NotificationReplyParams>(params)
+                json.encodeToJsonElement(device.notificationReply(decoded.key, decoded.text, decoded.action_index))
+            }
             else -> throw IllegalArgumentException("unknown method: $method")
+        }
+}
+
+object ProtocolEvents {
+    /**
+     * 通知出现或内容更新。
+     */
+    fun notificationPosted(seq: Int, ts: String, data: NotificationPostedData, json: Json): JsonObject =
+        event("notification.posted", seq, ts, json.encodeToJsonElement(data))
+
+    /**
+     * 通知被撤下。
+     */
+    fun notificationRemoved(seq: Int, ts: String, data: NotificationRemovedData, json: Json): JsonObject =
+        event("notification.removed", seq, ts, json.encodeToJsonElement(data))
+
+    /**
+     * 前台窗口变化。
+     */
+    fun uiWindowChanged(seq: Int, ts: String, data: UiWindowChangedData, json: Json): JsonObject =
+        event("ui.window_changed", seq, ts, json.encodeToJsonElement(data))
+
+    /**
+     * 界面内容变化。
+     */
+    fun uiContentChanged(seq: Int, ts: String, data: UiContentChangedData, json: Json): JsonObject =
+        event("ui.content_changed", seq, ts, json.encodeToJsonElement(data))
+
+    /**
+     * 输入框文本变化。
+     */
+    fun uiTextChanged(seq: Int, ts: String, data: UiTextChangedData, json: Json): JsonObject =
+        event("ui.text_changed", seq, ts, json.encodeToJsonElement(data))
+
+    /**
+     * 连续 300 毫秒没有界面事件。
+     */
+    fun uiIdle(seq: Int, ts: String, data: UiIdleData, json: Json): JsonObject =
+        event("ui.idle", seq, ts, json.encodeToJsonElement(data))
+
+    /**
+     * 熄屏、锁屏、交互状态变化。
+     */
+    fun screenState(seq: Int, ts: String, data: ScreenStateData, json: Json): JsonObject =
+        event("screen.state", seq, ts, json.encodeToJsonElement(data))
+
+    private fun event(type: String, seq: Int, ts: String, data: JsonElement): JsonObject =
+        buildJsonObject {
+            put("jsonrpc", "2.0")
+            put("method", "events")
+            putJsonObject("params") {
+                put("seq", seq)
+                put("ts", ts)
+                put("type", type)
+                put("data", data)
+            }
         }
 }

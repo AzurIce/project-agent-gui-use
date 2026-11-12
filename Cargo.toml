@@ -2,6 +2,7 @@
 resolver = "3"
 members = [
   "crates/gui-use-protocol",
+  "crates/gui-use-protocol-macros",
   "crates/gui-use-protocol-codegen",
   "crates/host",
 ]

@@ -2,6 +2,7 @@
   "events": [
     {
       "data_type": "NotificationPostedData",
+      "docs": "通知出现或内容更新。",
       "fields": [
         {
           "description": "",
@@ -35,11 +36,11 @@
         }
       ],
       "merge": "不合并，按 key 更新",
-      "name": "notification.posted",
-      "notes": "通知出现或内容更新"
+      "name": "notification.posted"
     },
     {
       "data_type": "NotificationRemovedData",
+      "docs": "通知被撤下。",
       "fields": [
         {
           "description": "",
@@ -49,11 +50,11 @@
         }
       ],
       "merge": "不合并",
-      "name": "notification.removed",
-      "notes": "通知被撤下"
+      "name": "notification.removed"
     },
     {
       "data_type": "UiWindowChangedData",
+      "docs": "前台窗口变化。",
       "fields": [
         {
           "description": "",
@@ -69,11 +70,11 @@
         }
       ],
       "merge": "保留最后一条",
-      "name": "ui.window_changed",
-      "notes": "前台窗口变化"
+      "name": "ui.window_changed"
     },
     {
       "data_type": "UiContentChangedData",
+      "docs": "界面内容变化。",
       "fields": [
         {
           "description": "",
@@ -95,11 +96,11 @@
         }
       ],
       "merge": "300ms 内合并",
-      "name": "ui.content_changed",
-      "notes": "界面内容变化"
+      "name": "ui.content_changed"
     },
     {
       "data_type": "UiTextChangedData",
+      "docs": "输入框文本变化。",
       "fields": [
         {
           "description": "",
@@ -115,11 +116,11 @@
         }
       ],
       "merge": "300ms 内合并",
-      "name": "ui.text_changed",
-      "notes": "输入框文本变化"
+      "name": "ui.text_changed"
     },
     {
       "data_type": "UiIdleData",
+      "docs": "连续 300 毫秒没有界面事件。",
       "fields": [
         {
           "description": "",
@@ -129,11 +130,11 @@
         }
       ],
       "merge": "保留最后一条",
-      "name": "ui.idle",
-      "notes": "连续 300 毫秒没有界面事件"
+      "name": "ui.idle"
     },
     {
       "data_type": "ScreenStateData",
+      "docs": "熄屏、锁屏、交互状态变化。",
       "fields": [
         {
           "description": "",
@@ -155,25 +156,22 @@
         }
       ],
       "merge": "保留最后一条",
-      "name": "screen.state",
-      "notes": "熄屏、锁屏、交互状态变化"
+      "name": "screen.state"
     }
   ],
   "methods": [
     {
+      "docs": "列出可启动的应用。\n\n默认只返回带 LAUNCHER 入口的包。\n\n```json\n{\"include_system\": false}\n```\n\n```json\n{\"apps\": [{\"package_name\": \"com.tencent.mm\", \"label\": \"微信\", \"launchable\": true}]}\n```",
       "name": "app.list",
-      "notes": "默认只返回带 LAUNCHER 入口的包。",
       "params": [
         {
-          "description": "是否包含系统应用，默认 false",
+          "description": "是否包含系统应用，默认 false。",
           "name": "include_system",
           "required": false,
           "type": "bool?"
         }
       ],
       "params_type": "AppListParams",
-      "request": "{\"include_system\": false}",
-      "response": "{\"apps\": [{\"package_name\": \"com.tencent.mm\", \"label\": \"微信\", \"launchable\": true}]}",
       "result": [
         {
           "description": "",
@@ -183,20 +181,20 @@
         }
       ],
       "result_type": "AppListResult",
-      "summary": "列出可启动的应用"
+      "summary": "列出可启动的应用。"
     },
     {
+      "docs": "启动应用。\n\n返回只表示请求已被接受，真正成功以 `ui.window_changed` 为准。\n\n```json\n{\"package_name\": \"com.tencent.mm\"}\n```\n\n```json\n{\"accepted\": true}\n```",
       "name": "app.launch",
-      "notes": "返回只表示请求已被接受，真正成功以 `ui.window_changed` 为准。",
       "params": [
         {
-          "description": "指定 Activity，省略则用 LAUNCHER 入口",
+          "description": "指定 Activity，省略则用 LAUNCHER 入口。",
           "name": "activity",
           "required": false,
           "type": "string?"
         },
         {
-          "description": "启动前是否强制停止",
+          "description": "启动前是否强制停止。",
           "name": "force_stop",
           "required": false,
           "type": "bool?"
@@ -209,8 +207,6 @@
         }
       ],
       "params_type": "AppLaunchParams",
-      "request": "{\"package_name\": \"com.tencent.mm\"}",
-      "response": "{\"accepted\": true}",
       "result": [
         {
           "description": "",
@@ -220,28 +216,26 @@
         }
       ],
       "result_type": "AppLaunchResult",
-      "summary": "启动应用"
+      "summary": "启动应用。"
     },
     {
+      "docs": "读取当前窗口的节点树。\n\n`seq` 对应该次快照观察到的最后一个事件序号。\n节点 id 只在本次快照内有效，跨快照需要按指纹重新匹配。\n\n```json\n{\"filter\": \"actionable\"}\n```\n\n```json\n{\"seq\": 42, \"package_name\": \"com.tencent.mm\", \"activity\": \".ui.LauncherUI\", \"truncated\": false, \"nodes\": []}\n```",
       "name": "ui.snapshot",
-      "notes": "`seq` 对应该次快照观察到的最后一个事件序号。节点 id 只在本次快照内有效，跨快照需要按指纹重新匹配。",
       "params": [
         {
-          "description": "`actionable` 或 `all`，默认 `actionable`",
+          "description": "`actionable` 或 `all`，默认 `actionable`。",
           "name": "filter",
           "required": false,
           "type": "string?"
         },
         {
-          "description": "节点上限，默认 800",
+          "description": "节点上限，默认 800。",
           "name": "max_nodes",
           "required": false,
           "type": "int?"
         }
       ],
       "params_type": "UiSnapshotParams",
-      "request": "{\"filter\": \"actionable\"}",
-      "response": "{\"seq\": 42, \"package_name\": \"com.tencent.mm\", \"activity\": \".ui.LauncherUI\", \"truncated\": false, \"nodes\": []}",
       "result": [
         {
           "description": "",
@@ -275,14 +269,14 @@
         }
       ],
       "result_type": "UiSnapshotResult",
-      "summary": "读取当前窗口的节点树"
+      "summary": "读取当前窗口的节点树。"
     },
     {
+      "docs": "按节点执行语义动作。\n\n节点动作不被支持时返回 `2002`，由调用方决定是否改用祖先节点或手势。\n\n```json\n{\"node\": \"n7\", \"action\": \"click\"}\n```\n\n```json\n{\"changed\": true}\n```",
       "name": "ui.act",
-      "notes": "执行顺序为节点动作、最近的可操作祖先、坐标手势。节点动作不被支持时返回 `2002`。",
       "params": [
         {
-          "description": "`click`、`long_click`、`set_text`、`clear_text`、`focus`、`scroll_forward`、`scroll_backward`、`select`",
+          "description": "`click`、`long_click`、`set_text`、`clear_text`、`focus`、`scroll_forward`、`scroll_backward`、`select`。",
           "name": "action",
           "required": true,
           "type": "string"
@@ -294,15 +288,13 @@
           "type": "string"
         },
         {
-          "description": "`set_text` 使用",
+          "description": "`set_text` 使用。",
           "name": "text",
           "required": false,
           "type": "string?"
         }
       ],
       "params_type": "UiActParams",
-      "request": "{\"node\": \"n7\", \"action\": \"click\"}",
-      "response": "{\"changed\": true}",
       "result": [
         {
           "description": "",
@@ -312,11 +304,11 @@
         }
       ],
       "result_type": "UiActResult",
-      "summary": "按节点执行语义动作"
+      "summary": "按节点执行语义动作。"
     },
     {
+      "docs": "执行原始手势。\n\n同一手势最多 10 个 stroke，总时长不超过 60 秒。\n\n```json\n{\"strokes\": [{\"points\": [{\"x\": 540, \"y\": 1800}, {\"x\": 540, \"y\": 600}], \"duration_ms\": 300}]}\n```\n\n```json\n{\"performed\": true}\n```",
       "name": "ui.gesture",
-      "notes": "同一手势最多 10 个 stroke，总时长不超过 60 秒。",
       "params": [
         {
           "description": "",
@@ -332,8 +324,6 @@
         }
       ],
       "params_type": "UiGestureParams",
-      "request": "{\"strokes\": [{\"points\": [{\"x\": 540, \"y\": 1800}, {\"x\": 540, \"y\": 600}], \"duration_ms\": 300}]}",
-      "response": "{\"performed\": true}",
       "result": [
         {
           "description": "",
@@ -343,11 +333,11 @@
         }
       ],
       "result_type": "UiGestureResult",
-      "summary": "执行原始手势"
+      "summary": "执行原始手势。"
     },
     {
+      "docs": "等待界面进入稳定状态。\n\n`idle` 表示连续 300 毫秒没有新的界面事件。\n\n```json\n{\"until\": \"idle\", \"timeout_ms\": 5000}\n```\n\n```json\n{\"matched\": true}\n```",
       "name": "ui.wait",
-      "notes": "`idle` 表示连续 300 毫秒没有新的界面事件。",
       "params": [
         {
           "description": "",
@@ -356,21 +346,19 @@
           "type": "int?"
         },
         {
-          "description": "`idle`、`window` 或 `text`",
+          "description": "`idle`、`window` 或 `text`。",
           "name": "until",
           "required": true,
           "type": "string"
         },
         {
-          "description": "`window` 时为包名，`text` 时为子串",
+          "description": "`window` 时为包名，`text` 时为子串。",
           "name": "value",
           "required": false,
           "type": "string?"
         }
       ],
       "params_type": "UiWaitParams",
-      "request": "{\"until\": \"idle\", \"timeout_ms\": 5000}",
-      "response": "{\"matched\": true}",
       "result": [
         {
           "description": "",
@@ -380,22 +368,20 @@
         }
       ],
       "result_type": "UiWaitResult",
-      "summary": "等待界面进入稳定状态"
+      "summary": "等待界面进入稳定状态。"
     },
     {
+      "docs": "抓取一帧画面。\n\nJSON-RPC 返回图片元数据；图片字节使用独立的二进制消息传输。\n\n```json\n{\"max_width\": 720}\n```\n\n```json\n{\"mime\": \"image/png\", \"width\": 540, \"height\": 1200, \"bytes\": 184320}\n```",
       "name": "ui.screenshot",
-      "notes": "返回二进制帧而不是 base64。",
       "params": [
         {
-          "description": "缩放上限，默认不缩放",
+          "description": "缩放上限，默认不缩放。",
           "name": "max_width",
           "required": false,
           "type": "int?"
         }
       ],
       "params_type": "UiScreenshotParams",
-      "request": "{\"max_width\": 720}",
-      "response": "{\"mime\": \"image/png\", \"width\": 540, \"height\": 1200, \"bytes\": 184320}",
       "result": [
         {
           "description": "",
@@ -423,11 +409,11 @@
         }
       ],
       "result_type": "UiScreenshotInfo",
-      "summary": "抓取一帧画面"
+      "summary": "抓取一帧画面。"
     },
     {
+      "docs": "读取当前活跃通知。\n\n没有历史回填；服务连接时仍然活跃的通知可以读取。\n\n```json\n{\"limit\": 20}\n```\n\n```json\n{\"notifications\": [{\"key\": \"0|com.tencent.mm|1|null|10001\", \"package_name\": \"com.tencent.mm\", \"title\": \"小明\", \"text\": \"明天几点出发？\", \"posted_at\": \"2026-11-12T01:23:45.678Z\", \"ongoing\": false, \"actions\": []}]}\n```",
       "name": "notification.list",
-      "notes": "没有历史回填，服务启用之前发生的事看不到。",
       "params": [
         {
           "description": "",
@@ -437,8 +423,6 @@
         }
       ],
       "params_type": "NotificationListParams",
-      "request": "{\"limit\": 20}",
-      "response": "{\"notifications\": [{\"key\": \"0|com.tencent.mm|1|null|10001\", \"package_name\": \"com.tencent.mm\", \"title\": \"小明\", \"text\": \"明天几点出发？\", \"posted_at\": \"2026-11-12T01:23:45.678Z\", \"ongoing\": false, \"actions\": []}]}",
       "result": [
         {
           "description": "",
@@ -448,14 +432,14 @@
         }
       ],
       "result_type": "NotificationListResult",
-      "summary": "读取当前活跃通知"
+      "summary": "读取当前活跃通知。"
     },
     {
+      "docs": "通过通知自带的 RemoteInput 回复。\n\n不打开界面。\n\n```json\n{\"key\": \"0|com.tencent.mm|1|null|10001\", \"text\": \"八点\"}\n```\n\n```json\n{\"sent\": true}\n```",
       "name": "notification.reply",
-      "notes": "不打开界面。",
       "params": [
         {
-          "description": "默认为第一个带 remote input 的 action",
+          "description": "默认为第一个带 remote input 的 action。",
           "name": "action_index",
           "required": false,
           "type": "int?"
@@ -474,8 +458,6 @@
         }
       ],
       "params_type": "NotificationReplyParams",
-      "request": "{\"key\": \"0|com.tencent.mm|1|null|10001\", \"text\": \"八点\"}",
-      "response": "{\"sent\": true}",
       "result": [
         {
           "description": "",
@@ -485,10 +467,14 @@
         }
       ],
       "result_type": "NotificationReplyResult",
-      "summary": "通过通知自带的 RemoteInput 回复"
+      "summary": "通过通知自带的 RemoteInput 回复。"
     }
   ],
   "protocol": 1,
+  "service": {
+    "docs": "Android 设备提供的操作。Rust 通过 `DeviceClient` 调用，Kotlin 实现同名接口。",
+    "name": "Device"
+  },
   "types": [
     {
       "fields": [

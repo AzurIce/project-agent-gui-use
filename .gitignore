@@ -26,3 +26,6 @@ android/captures/
 # Signing material
 *.jks
 *.keystore
+
+# Python site extension tests
+__pycache__/

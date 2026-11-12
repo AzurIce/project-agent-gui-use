@@ -4,4 +4,4 @@
 
 方法只有在 `hello` 的 `capabilities` 中声明后才可调用，未声明的方法返回 `-32601`。
 
-#protocol.page()
+<!-- protocol:methods -->

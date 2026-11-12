@@ -11,6 +11,10 @@ copy_content_assets = false
 [site.extensions.builtins.book]
 select = true
 
+[site.extensions.protocol]
+command = ["python3", "scripts/notist_protocol.py"]
+watch = ["scripts/notist_protocol.py", "protocol/registry.json"]
+
 [[extensions]]
 kind = "replace"
 imports = { typst = "docs/_components/typst/lib.notc" }
