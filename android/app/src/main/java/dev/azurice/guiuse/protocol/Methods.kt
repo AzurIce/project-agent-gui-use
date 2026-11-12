@@ -20,6 +20,7 @@ object Methods {
     const val UI_SCREENSHOT = "ui.screenshot"
     const val NOTIFICATION_LIST = "notification.list"
     const val NOTIFICATION_REPLY = "notification.reply"
+    val ALL: Set<String> = setOf(APP_LIST, APP_LAUNCH, UI_SNAPSHOT, UI_ACT, UI_GESTURE, UI_WAIT, UI_SCREENSHOT, NOTIFICATION_LIST, NOTIFICATION_REPLY)
 }
 
 /**
@@ -55,7 +56,7 @@ interface Device {
      * {"accepted": true}
      * ```
      * @param activity 指定 Activity，省略则用 LAUNCHER 入口。
-     * @param forceStop 启动前是否强制停止。
+     * @param forceStop 非特权 Android 应用不能强制停止其他应用；true 返回 2002。
      */
     suspend fun appLaunch(packageName: String, activity: String? = null, forceStop: Boolean? = null): AppLaunchResult
 

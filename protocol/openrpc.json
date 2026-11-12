@@ -30,7 +30,7 @@
             ]
           },
           "force_stop": {
-            "description": "启动前是否强制停止。",
+            "description": "非特权 Android 应用不能强制停止其他应用；true 返回 2002。",
             "type": [
               "boolean",
               "null"
@@ -215,6 +215,12 @@
       "NodeFlags": {
         "properties": {
           "checkable": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "checked": {
             "type": [
               "boolean",
               "null"
@@ -780,11 +786,11 @@
           }
         },
         {
-          "description": "启动前是否强制停止。",
+          "description": "非特权 Android 应用不能强制停止其他应用；true 返回 2002。",
           "name": "force_stop",
           "required": false,
           "schema": {
-            "description": "启动前是否强制停止。",
+            "description": "非特权 Android 应用不能强制停止其他应用；true 返回 2002。",
             "type": [
               "boolean",
               "null"

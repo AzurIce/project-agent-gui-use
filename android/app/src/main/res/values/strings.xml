@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">GUI Use</string>
     <string name="accessibility_service_description">读取界面结构与执行操作，供本机 agent 使用。</string>
+    <string name="connection_status">%1$s\nAccessibility: %2$s\nNotification access: %3$s\n</string>
 </resources>

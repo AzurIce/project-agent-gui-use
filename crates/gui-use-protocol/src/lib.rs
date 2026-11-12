@@ -99,6 +99,31 @@ pub fn find_method(name: &str) -> Option<&'static MethodSpec> {
 
 // ---------------------------------------------------------------- 应用
 
+/// 手机主动连接 host 后的认证与能力协商。
+#[typeshare]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct DeviceInfo {
+    pub id: String,
+    pub model: String,
+    pub sdk: i32,
+}
+
+#[typeshare]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct HelloParams {
+    pub protocol: i32,
+    pub token: String,
+    pub device: DeviceInfo,
+    pub capabilities: Vec<String>,
+}
+
+#[typeshare]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct HelloResult {
+    pub protocol: i32,
+    pub events: Vec<String>,
+}
+
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct AppInfo {
@@ -140,6 +165,7 @@ pub struct NodeFlags {
     pub enabled: Option<bool>,
     pub focused: Option<bool>,
     pub selected: Option<bool>,
+    pub checked: Option<bool>,
 }
 
 #[typeshare]
@@ -278,7 +304,7 @@ pub trait Device {
         package_name: String,
         /// 指定 Activity，省略则用 LAUNCHER 入口。
         activity: Option<String>,
-        /// 启动前是否强制停止。
+        /// 非特权 Android 应用不能强制停止其他应用；true 返回 2002。
         force_stop: Option<bool>,
     ) -> AppLaunchResult;
 

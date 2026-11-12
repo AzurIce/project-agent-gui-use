@@ -194,7 +194,7 @@
           "type": "string?"
         },
         {
-          "description": "启动前是否强制停止。",
+          "description": "非特权 Android 应用不能强制停止其他应用；true 返回 2002。",
           "name": "force_stop",
           "required": false,
           "type": "bool?"
@@ -632,6 +632,12 @@
         {
           "description": "",
           "name": "checkable",
+          "required": false,
+          "type": "bool?"
+        },
+        {
+          "description": "",
+          "name": "checked",
           "required": false,
           "type": "bool?"
         },

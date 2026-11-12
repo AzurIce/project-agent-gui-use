@@ -7,6 +7,7 @@ plugins {
 }
 
 android {
+    buildFeatures { buildConfig = true }
     namespace = "dev.azurice.guiuse"
     compileSdk = 36
     buildToolsVersion = "36.0.0"
@@ -39,5 +40,7 @@ kotlin {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     testImplementation("junit:junit:4.13.2")
 }

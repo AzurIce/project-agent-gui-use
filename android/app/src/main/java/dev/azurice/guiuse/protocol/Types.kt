@@ -19,7 +19,7 @@ data class AppLaunchParams (
 	val package_name: String,
 	/// 指定 Activity，省略则用 LAUNCHER 入口。
 	val activity: String? = null,
-	/// 启动前是否强制停止。
+	/// 非特权 Android 应用不能强制停止其他应用；true 返回 2002。
 	val force_stop: Boolean? = null
 )
 
@@ -47,6 +47,14 @@ data class Bounds (
 	val bottom: Int
 )
 
+/// 手机主动连接 host 后的认证与能力协商。
+@Serializable
+data class DeviceInfo (
+	val id: String,
+	val model: String,
+	val sdk: Int
+)
+
 @Serializable
 data class GesturePoint (
 	val x: Int,
@@ -61,6 +69,20 @@ data class GestureStroke (
 )
 
 @Serializable
+data class HelloParams (
+	val protocol: Int,
+	val token: String,
+	val device: DeviceInfo,
+	val capabilities: List<String>
+)
+
+@Serializable
+data class HelloResult (
+	val protocol: Int,
+	val events: List<String>
+)
+
+@Serializable
 data class NodeFlags (
 	val clickable: Boolean? = null,
 	val editable: Boolean? = null,
@@ -68,7 +90,8 @@ data class NodeFlags (
 	val checkable: Boolean? = null,
 	val enabled: Boolean? = null,
 	val focused: Boolean? = null,
-	val selected: Boolean? = null
+	val selected: Boolean? = null,
+	val checked: Boolean? = null
 )
 
 @Serializable

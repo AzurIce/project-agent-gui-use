@@ -12,7 +12,7 @@ export interface AppLaunchParams {
 	package_name: string;
 	/** 指定 Activity，省略则用 LAUNCHER 入口。 */
 	activity?: string;
-	/** 启动前是否强制停止。 */
+	/** 非特权 Android 应用不能强制停止其他应用；true 返回 2002。 */
 	force_stop?: boolean;
 }
 
@@ -36,6 +36,13 @@ export interface Bounds {
 	bottom: number;
 }
 
+/** 手机主动连接 host 后的认证与能力协商。 */
+export interface DeviceInfo {
+	id: string;
+	model: string;
+	sdk: number;
+}
+
 export interface GesturePoint {
 	x: number;
 	y: number;
@@ -47,6 +54,18 @@ export interface GestureStroke {
 	duration_ms?: number;
 }
 
+export interface HelloParams {
+	protocol: number;
+	token: string;
+	device: DeviceInfo;
+	capabilities: string[];
+}
+
+export interface HelloResult {
+	protocol: number;
+	events: string[];
+}
+
 export interface NodeFlags {
 	clickable?: boolean;
 	editable?: boolean;
@@ -55,6 +74,7 @@ export interface NodeFlags {
 	enabled?: boolean;
 	focused?: boolean;
 	selected?: boolean;
+	checked?: boolean;
 }
 
 export interface Node {

@@ -50,7 +50,14 @@ pub fn generate() -> String {
             method.name
         ));
     }
-    out.push_str("}\n\n");
+    let names = METHODS
+        .iter()
+        .map(|method| method.ident.to_uppercase())
+        .collect::<Vec<_>>()
+        .join(", ");
+    out.push_str(&format!(
+        "    val ALL: Set<String> = setOf({names})\n}}\n\n"
+    ));
     out.push_str(&kdoc(SERVICE.docs, ""));
     out.push_str(&format!("interface {} {{\n", SERVICE.name));
     for method in METHODS {
